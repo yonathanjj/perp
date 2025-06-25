@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP Dashboard - Construction Materials</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #10b981;
+            --secondary-dark: #059669;
+            --accent: #8b5cf6;
+            --accent-dark: #7c3aed;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #06b6d4;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .sidebar {
+            height: 100vh;
+            overflow-y: auto;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .main-content {
+            height: 100vh;
+            overflow-y: auto;
+            background-color: #f8fafc;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .metric-card {
+            transition: all 0.3s ease;
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-link {
+            transition: all 0.2s ease;
+            border-radius: 0.375rem;
+        }
+
+        .nav-link:hover:not(.active) {
+            background-color: #f1f5f9;
+        }
+
+        .nav-link.active {
+            background-color: #e0f2fe;
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 0.75rem;
+            width: 100%;
+            max-width: 32rem;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-row {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            align-items: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background-color: #dbeafe;
+            color: var(--primary-dark);
+        }
+
+        .badge-success {
+            background-color: #dcfce7;
+            color: var(--secondary-dark);
+        }
+
+        .badge-warning {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .trend-up {
+            color: #10b981;
+        }
+
+        .trend-down {
+            color: #ef4444;
+        }
+
+        .trend-neutral {
+            color: #64748b;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--secondary-dark);
+        }
+
+        .btn-accent {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .btn-accent:hover {
+            background-color: var(--accent-dark);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+        }
+
+        .btn-outline:hover {
+            background-color: #f1f5f9;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            border: 1px solid #cbd5e1;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #334155;
+        }
+
+        .avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e0f2fe;
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+        .daily-stats-table {
+            width: 100%;
+        }
+
+        .daily-stats-table th {
+            text-align: left;
+            padding: 0.5rem;
+            font-weight: 600;
+            color: #64748b;
+            font-size: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .daily-stats-table td {
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .daily-stats-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card-title {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-card-change {
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body class="flex h-screen bg-gray-50">
+    <!-- Sidebar -->
+    <div class="sidebar w-64 flex flex-col">
+        <!-- Logo -->
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center space-x-3">
+                <div class="avatar">
+                    <i class="fas fa-warehouse"></i>
+                </div>
+                <span class="text-xl font-bold text-gray-800">Construction ERP</span>
+            </div>
+        </div>
+
+        <!-- User Info -->
+        <div class="p-4 border-b border-gray-200 flex items-center space-x-3">
+            <div class="avatar" id="user-avatar">
+                <span id="avatar-initials">U</span>
+            </div>
+            <div>
+                <div class="font-medium" id="username-display">Loading...</div>
+                <div class="text-xs text-gray-500" id="role-display">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex-1 overflow-y-auto">
+            <nav class="p-4 space-y-1">
+                <a href="#" data-page="dashboard" class="nav-link active block px-3 py-2">
+                    <i class="fas fa-home mr-3"></i>Dashboard
+                </a>
+                <a href="#" data-page="inventory" class="nav-link block px-3 py-2">
+                    <i class="fas fa-boxes mr-3"></i>Inventory
+                </a>
+                <a href="#" data-page="transfers" class="nav-link block px-3 py-2">
+                    <i class="fas fa-exchange-alt mr-3"></i>Transfers
+                </a>
+                <a href="#" data-page="sales" class="nav-link block px-3 py-2">
+                    <i class="fas fa-shopping-cart mr-3"></i>Sales
+                </a>
+                <a href="#" data-page="reports" class="nav-link block px-3 py-2">
+                    <i class="fas fa-chart-line mr-3"></i>Reports
+                </a>
+            </nav>
+        </div>
+
+        <!-- Sync Status -->
+        <div class="p-4 border-t border-gray-200">
+            <div class="flex items-center justify-between text-sm">
+                <div class="flex items-center">
+                    <div class="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>
+                    <span id="sync-status">Online</span>
+                </div>
+                <button id="force-sync" class="text-blue-600 hover:text-blue-800">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content flex-1 flex flex-col">
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-200 p-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-bold text-gray-800" id="dashboard-title">Dashboard</h1>
+                <div class="flex items-center space-x-4">
+                    <button id="notifications-btn" class="relative text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-bell"></i>
+                        <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center hidden" id="notification-badge">3</span>
+                    </button>
+                    <button id="logout-btn" class="text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="flex-1 p-6 overflow-y-auto">
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page active">
+                <!-- Quick Actions -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <button id="add-inventory-btn" class="metric-card p-4 flex items-center justify-center space-x-2 hover:bg-gray-50">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-plus text-blue-600"></i>
+                        </div>
+                        <span class="font-medium">Add Inventory</span>
+                    </button>
+                    <button id="transfer-btn" class="metric-card p-4 flex items-center justify-center space-x-2 hover:bg-gray-50">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-exchange-alt text-green-600"></i>
+                        </div>
+                        <span class="font-medium">Transfer Items</span>
+                    </button>
+                    <button id="new-sale-btn" class="metric-card p-4 flex items-center justify-center space-x-2 hover:bg-gray-50">
+                        <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-shopping-cart text-purple-600"></i>
+                        </div>
+                        <span class="font-medium">New Sale</span>
+                    </button>
+                </div>
+
+                <!-- Stats Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="metric-card p-4">
+                        <div class="text-gray-500 text-sm mb-1">Total Inventory</div>
+                        <div class="text-2xl font-bold text-blue-600" id="total-inventory">0</div>
+                        <div class="text-xs text-gray-500 mt-1">Across all locations</div>
+                    </div>
+                    <div class="metric-card p-4">
+                        <div class="text-gray-500 text-sm mb-1">Warehouse Stock</div>
+                        <div class="text-2xl font-bold text-green-600" id="warehouse-stock">0</div>
+                        <div class="text-xs text-gray-500 mt-1">Available in warehouse</div>
+                    </div>
+                    <div class="metric-card p-4">
+                        <div class="text-gray-500 text-sm mb-1">Showroom Stock</div>
+                        <div class="text-2xl font-bold text-purple-600" id="showroom-stock">0</div>
+                        <div class="text-xs text-gray-500 mt-1">Available in showroom</div>
+                    </div>
+                    <div class="metric-card p-4">
+                        <div class="text-gray-500 text-sm mb-1">Pending Transfers</div>
+                        <div class="text-2xl font-bold text-yellow-600" id="pending-transfers">0</div>
+                        <div class="text-xs text-gray-500 mt-1">Awaiting completion</div>
+                    </div>
+                </div>
+
+                <!-- Inventory Movement Table -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="metric-card p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-medium text-gray-800">Inventory Movement</h3>
+                            <select id="inventory-period" class="text-xs border border-gray-200 rounded px-2 py-1 bg-gray-50">
+                                <option value="7">Last 7 days</option>
+                                <option value="30">Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                            </select>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="daily-stats-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Received</th>
+                                        <th>Transferred</th>
+                                        <th>Net Change</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventory-movement-table">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="metric-card p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-medium text-gray-800">Sales Performance</h3>
+                            <select id="sales-period" class="text-xs border border-gray-200 rounded px-2 py-1 bg-gray-50">
+                                <option value="7">Last 7 days</option>
+                                <option value="30">Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                            </select>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="daily-stats-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Warehouse</th>
+                                        <th>Showroom</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sales-performance-table">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="metric-card p-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-medium text-gray-800">Recent Activity</h3>
+                        <button class="text-xs text-blue-600 hover:text-blue-800">View All</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Action</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activity-table">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Page -->
+            <div id="inventory-page" class="page">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">Inventory Management</h2>
+                    <button id="add-inventory-btn-inv" class="btn btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Add Inventory
+                    </button>
+                </div>
+
+                <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">Filter by Location</label>
+                        <select id="inventory-filter" class="form-control">
+                            <option value="all">All Locations</option>
+                            <option value="warehouse">Warehouse</option>
+                            <option value="showroom">Showroom</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Search Products</label>
+                        <input type="text" id="inventory-search" class="form-control" placeholder="Search by product name or brand">
+                    </div>
+                </div>
+
+                <div class="metric-card p-4">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Product ID</th>
+                                    <th>Product Name</th>
+                                    <th>Brand</th>
+                                    <th>Location</th>
+                                    <th>Quantity</th>
+                                    <th>Last Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-table">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="text-sm text-gray-500" id="inventory-pagination-info">Showing 0 to 0 of 0 entries</div>
+                        <div class="flex space-x-2" id="inventory-pagination">
+                            <!-- Pagination will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transfers Page -->
+            <div id="transfers-page" class="page">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">Transfer Management</h2>
+                    <button id="transfer-btn-trans" class="btn btn-secondary">
+                        <i class="fas fa-exchange-alt mr-2"></i>New Transfer
+                    </button>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Filter by Status</label>
+                    <select id="transfer-filter" class="form-control">
+                        <option value="all">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <div class="metric-card p-4">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Transfer ID</th>
+                                    <th>Product</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Quantity</th>
+                                    <th>Status</th>
+                                    <th>Initiated By</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transfers-table">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="text-sm text-gray-500" id="transfers-pagination-info">Showing 0 to 0 of 0 entries</div>
+                        <div class="flex space-x-2" id="transfers-pagination">
+                            <!-- Pagination will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales Page -->
+            <div id="sales-page" class="page">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">Sales Management</h2>
+                    <button id="new-sale-btn-sales" class="btn btn-accent">
+                        <i class="fas fa-shopping-cart mr-2"></i>New Sale
+                    </button>
+                </div>
+
+                <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">Filter by Location</label>
+                        <select id="sales-filter" class="form-control">
+                            <option value="all">All Locations</option>
+                            <option value="warehouse">Warehouse</option>
+                            <option value="showroom">Showroom</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Search</label>
+                        <input type="text" id="sales-search" class="form-control" placeholder="Search by customer or product">
+                    </div>
+                </div>
+
+                <div class="metric-card p-4">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Sale ID</th>
+                                    <th>Customer</th>
+                                    <th>Location</th>
+                                    <th>Products</th>
+                                    <th>Total</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sales-table">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="text-sm text-gray-500" id="sales-pagination-info">Showing 0 to 0 of 0 entries</div>
+                        <div class="flex space-x-2" id="sales-pagination">
+                            <!-- Pagination will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Page -->
+            <div id="reports-page" class="page">
+                <h2 class="text-xl font-bold text-gray-800 mb-6">Reports</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="metric-card p-4">
+                        <h3 class="font-medium text-gray-800 mb-4">Inventory Report</h3>
+                        <div class="overflow-x-auto">
+                            <table class="daily-stats-table">
+                                <thead>
+                                    <tr>
+                                        <th>Location</th>
+                                        <th>Items</th>
+                                        <th>Quantity</th>
+                                        <th>% of Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventory-report-table">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button id="export-inventory-report" class="btn btn-outline">
+                                <i class="fas fa-download mr-2"></i>Export Report
+                            </button>
+                        </div>
+                    </div>
+                    <div class="metric-card p-4">
+                        <h3 class="font-medium text-gray-800 mb-4">Sales Report</h3>
+                        <div class="overflow-x-auto">
+                            <table class="daily-stats-table">
+                                <thead>
+                                    <tr>
+                                        <th>Location</th>
+                                        <th>Sales Count</th>
+                                        <th>Total Revenue</th>
+                                        <th>Avg. Sale</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sales-report-table">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button id="export-sales-report" class="btn btn-outline">
+                                <i class="fas fa-download mr-2"></i>Export Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card p-4">
+                    <h3 class="font-medium text-gray-800 mb-4">Transfer Report</h3>
+                    <div class="overflow-x-auto">
+                        <table class="daily-stats-table">
+                            <thead>
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Warehouse → Showroom</th>
+                                    <th>Showroom → Warehouse</th>
+                                    <th>Net Movement</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transfer-report-table">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button id="export-transfer-report" class="btn btn-outline">
+                            <i class="fas fa-download mr-2"></i>Export Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Inventory Modal -->
+    <div id="add-inventory-modal" class="modal">
+        <div class="modal-content p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium">Add New Inventory</h3>
+                <button id="close-add-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="add-inventory-form">
+                <div class="mb-4">
+                    <label class="form-label">Product Name</label>
+                    <input type="text" id="product-name" class="form-control" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Brand</label>
+                    <input type="text" id="product-brand" class="form-control" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" id="product-quantity" class="form-control" min="1" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Location</label>
+                    <select id="product-location" class="form-control" required>
+                        <option value="warehouse">Warehouse</option>
+                        <option value="showroom">Showroom</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancel-add-inventory" class="btn btn-outline">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Inventory</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div id="transfer-modal" class="modal">
+        <div class="modal-content p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium">Transfer Items</h3>
+                <button id="close-transfer-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="transfer-form">
+                <div class="mb-4">
+                    <label class="form-label">Product</label>
+                    <select id="transfer-product" class="form-control" required>
+                        <option value="">Select Product</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" id="transfer-quantity" class="form-control" min="1" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">From</label>
+                    <select id="transfer-from" class="form-control" required>
+                        <option value="warehouse">Warehouse</option>
+                        <option value="showroom">Showroom</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">To</label>
+                    <select id="transfer-to" class="form-control" required>
+                        <option value="showroom">Showroom</option>
+                        <option value="warehouse">Warehouse</option>
+                        <option value="customer">Customer (Sale)</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancel-transfer" class="btn btn-outline">Cancel</button>
+                    <button type="submit" class="btn btn-secondary">Transfer Items</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sale Modal -->
+    <div id="sale-modal" class="modal">
+        <div class="modal-content p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium">New Sale</h3>
+                <button id="close-sale-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="sale-form">
+                <div class="mb-4">
+                    <label class="form-label">Customer Name</label>
+                    <input type="text" id="customer-name" class="form-control" placeholder="Optional">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Products</label>
+                    <div id="sale-products-container">
+                        <div class="product-row">
+                            <select class="sale-product form-control flex-1" required>
+                                <option value="">Select Product</option>
+                            </select>
+                            <input type="number" placeholder="Qty" class="sale-quantity form-control w-20" min="1" required>
+                            <button type="button" class="text-red-500 hover:text-red-700 remove-product-btn">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" id="add-product-btn" class="mt-2 text-sm text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-plus mr-1"></i>Add Another Product
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Sale Location</label>
+                    <select id="sale-location" class="form-control" required>
+                        <option value="showroom">Showroom</option>
+                        <option value="warehouse">Warehouse (Bulk Order)</option>
+                    </select>
+                </div>
+                <div class="mb-4 p-3 bg-gray-50 rounded">
+                    <div class="flex justify-between">
+                        <span class="font-medium">Total Amount:</span>
+                        <span class="font-bold" id="sale-total-amount">₹0.00</span>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancel-sale" class="btn btn-outline">Cancel</button>
+                    <button type="submit" class="btn btn-accent">Complete Sale</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Sale Modal -->
+    <div id="view-sale-modal" class="modal">
+        <div class="modal-content p-6" style="max-width: 600px;">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium">Sale Details</h3>
+                <button id="close-view-sale-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="sale-details-content">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = {
+            id: null,
+            username: '',
+            role: '',
+            csrfToken: ''
+        };
+
+        let currentInventoryPage = 1;
+        let currentTransfersPage = 1;
+        let currentSalesPage = 1;
+        const perPage = 10;
+
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check authentication status
+            try {
+                const response = await fetch('/api/check-auth');
+                const data = await response.json();
+
+                if (!data.authenticated) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Load user data
+                await loadUserData();
+
+                // Initialize navigation
+                setupNavigation();
+
+                // Initialize dashboard
+                initializeDashboard();
+
+                // Initialize modals
+                setupModals();
+
+                // Load initial data
+                loadData();
+
+                // Set up periodic data refresh
+                setInterval(loadData, 30000); // Refresh every 30 seconds
+
+            } catch (error) {
+                console.error('Initialization error:', error);
+                window.location.href = '/login';
+            }
+        });
+
+        async function loadUserData() {
+            try {
+                const response = await fetch('/api/check-auth');
+                if (!response.ok) throw new Error('Failed to fetch user data');
+
+                const data = await response.json();
+
+                if (data.authenticated) {
+                    // Get CSRF token from session
+                    const csrfResponse = await fetch('/api/csrf-token');
+                    if (!csrfResponse.ok) throw new Error('Failed to fetch CSRF token');
+
+                    const csrfData = await csrfResponse.json();
+
+                    // Update UI with user info
+                    document.getElementById('username-display').textContent = sessionStorage.getItem('username') || 'User';
+                    document.getElementById('role-display').textContent =
+                        sessionStorage.getItem('role') === 'admin' ? 'Administrator' :
+                        sessionStorage.getItem('role') === 'warehouse' ? 'Warehouse Staff' : 'Showroom Staff';
+
+                    document.getElementById('dashboard-title').textContent =
+                        sessionStorage.getItem('role') === 'admin' ? 'Admin Dashboard' :
+                        sessionStorage.getItem('role') === 'warehouse' ? 'Warehouse Dashboard' : 'Showroom Dashboard';
+
+                    // Set avatar initials
+                    const username = sessionStorage.getItem('username') || 'U';
+                    document.getElementById('avatar-initials').textContent = username.charAt(0).toUpperCase();
+
+                    // Store user data
+                    currentUser.id = sessionStorage.getItem('user_id');
+                    currentUser.username = sessionStorage.getItem('username');
+                    currentUser.role = sessionStorage.getItem('role');
+                    currentUser.csrfToken = csrfData.csrf_token;
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                throw error;
+            }
+        }
+
+        function setupNavigation() {
+            // Navigation links
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // Remove active class from all links
+                    navLinks.forEach(l => l.classList.remove('active'));
+
+                    // Add active class to clicked link
+                    this.classList.add('active');
+
+                    // Hide all pages
+                    document.querySelectorAll('.page').forEach(page => {
+                        page.classList.remove('active');
+                    });
+
+                    // Show selected page
+                    const pageId = this.dataset.page + '-page';
+                    document.getElementById(pageId).classList.add('active');
+
+                    // Load data for the page if needed
+                    switch(this.dataset.page) {
+                        case 'inventory':
+                            loadInventory();
+                            break;
+                        case 'transfers':
+                            loadTransfers();
+                            break;
+                        case 'sales':
+                            loadSales();
+                            break;
+                        case 'reports':
+                            loadReports();
+                            break;
+                    }
+                });
+            });
+        }
+
+        function initializeDashboard() {
+            // Period selectors
+            document.getElementById('inventory-period').addEventListener('change', function() {
+                updateInventoryTable(parseInt(this.value));
+            });
+
+            document.getElementById('sales-period').addEventListener('change', function() {
+                updateSalesTable(parseInt(this.value));
+            });
+        }
+
+        function setupModals() {
+            // Modal handling
+            const modals = {
+                'add-inventory': document.getElementById('add-inventory-modal'),
+                'transfer': document.getElementById('transfer-modal'),
+                'sale': document.getElementById('sale-modal'),
+                'view-sale': document.getElementById('view-sale-modal')
+            };
+
+            // Open modal buttons
+            document.getElementById('add-inventory-btn').addEventListener('click', () => {
+                modals['add-inventory'].style.display = 'flex';
+            });
+
+            document.getElementById('add-inventory-btn-inv').addEventListener('click', () => {
+                modals['add-inventory'].style.display = 'flex';
+            });
+
+            document.getElementById('transfer-btn').addEventListener('click', async () => {
+                await loadProductsForTransfer();
+                modals['transfer'].style.display = 'flex';
+            });
+
+            document.getElementById('transfer-btn-trans').addEventListener('click', async () => {
+                await loadProductsForTransfer();
+                modals['transfer'].style.display = 'flex';
+            });
+
+            document.getElementById('new-sale-btn').addEventListener('click', async () => {
+                await loadProductsForSale();
+                modals['sale'].style.display = 'flex';
+            });
+
+            document.getElementById('new-sale-btn-sales').addEventListener('click', async () => {
+                await loadProductsForSale();
+                modals['sale'].style.display = 'flex';
+            });
+
+            // Close modal buttons
+            document.getElementById('close-add-modal').addEventListener('click', () => {
+                modals['add-inventory'].style.display = 'none';
+                document.getElementById('add-inventory-form').reset();
+            });
+
+            document.getElementById('close-transfer-modal').addEventListener('click', () => {
+                modals['transfer'].style.display = 'none';
+                document.getElementById('transfer-form').reset();
+            });
+
+            document.getElementById('close-sale-modal').addEventListener('click', () => {
+                modals['sale'].style.display = 'none';
+                resetSaleForm();
+            });
+
+            document.getElementById('close-view-sale-modal').addEventListener('click', () => {
+                modals['view-sale'].style.display = 'none';
+            });
+
+            document.getElementById('cancel-add-inventory').addEventListener('click', () => {
+                modals['add-inventory'].style.display = 'none';
+                document.getElementById('add-inventory-form').reset();
+            });
+
+            document.getElementById('cancel-transfer').addEventListener('click', () => {
+                modals['transfer'].style.display = 'none';
+                document.getElementById('transfer-form').reset();
+            });
+
+            document.getElementById('cancel-sale').addEventListener('click', () => {
+                modals['sale'].style.display = 'none';
+                resetSaleForm();
+            });
+
+            // Close modals when clicking outside
+            Object.values(modals).forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                        if (modal.id === 'add-inventory-modal') {
+                            document.getElementById('add-inventory-form').reset();
+                        } else if (modal.id === 'transfer-modal') {
+                            document.getElementById('transfer-form').reset();
+                        } else if (modal.id === 'sale-modal') {
+                            resetSaleForm();
+                        }
+                    }
+                });
+            });
+
+            // Add product row in sale form
+            document.getElementById('add-product-btn').addEventListener('click', async () => {
+                const container = document.getElementById('sale-products-container');
+                const newRow = document.createElement('div');
+                newRow.className = 'product-row';
+                newRow.innerHTML = `
+                    <select class="sale-product form-control flex-1" required>
+                        <option value="">Select Product</option>
+                    </select>
+                    <input type="number" placeholder="Qty" class="sale-quantity form-control w-20" min="1" required>
+                    <button type="button" class="text-red-500 hover:text-red-700 remove-product-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                container.appendChild(newRow);
+
+                // Populate products in the new select
+                await populateProductSelect(newRow.querySelector('.sale-product'));
+
+                // Add event listener to the new remove button
+                newRow.querySelector('.remove-product-btn').addEventListener('click', function() {
+                    container.removeChild(newRow);
+                    calculateSaleTotal();
+                });
+
+                // Add event listeners for quantity changes
+                newRow.querySelector('.sale-quantity').addEventListener('change', calculateSaleTotal);
+                newRow.querySelector('.sale-product').addEventListener('change', calculateSaleTotal);
+            });
+
+            // Calculate sale total when quantities change
+            document.getElementById('sale-products-container').addEventListener('change', function(e) {
+                if (e.target.classList.contains('sale-quantity') || e.target.classList.contains('sale-product')) {
+                    calculateSaleTotal();
+                }
+            });
+
+            // Form submissions
+            document.getElementById('add-inventory-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const submitButton = this.querySelector('button[type="submit"]');
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+                submitButton.disabled = true;
+
+                const productData = {
+                    name: document.getElementById('product-name').value,
+                    brand: document.getElementById('product-brand').value,
+                    location: document.getElementById('product-location').value,
+                    quantity: parseInt(document.getElementById('product-quantity').value)
+                };
+
+                try {
+                    const response = await fetch('/api/inventory', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': currentUser.csrfToken
+                        },
+                        body: JSON.stringify(productData)
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to add inventory');
+                    }
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Inventory added successfully!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+
+                    modals['add-inventory'].style.display = 'none';
+                    this.reset();
+                    loadData();
+                    loadInventory();
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message
+                    });
+                } finally {
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                }
+            });
+
+            document.getElementById('transfer-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const submitButton = this.querySelector('button[type="submit"]');
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+                submitButton.disabled = true;
+
+                const transferData = {
+                    product_id: parseInt(document.getElementById('transfer-product').value),
+                    from_location: document.getElementById('transfer-from').value,
+                    to_location: document.getElementById('transfer-to').value,
+                    quantity: parseInt(document.getElementById('transfer-quantity').value)
+                };
+
+                try {
+                    const response = await fetch('/api/transfers', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': currentUser.csrfToken
+                        },
+                        body: JSON.stringify(transferData)
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to initiate transfer');
+                    }
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Transfer initiated successfully!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+
+                    modals['transfer'].style.display = 'none';
+                    this.reset();
+                    loadData();
+                    loadTransfers();
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message
+                    });
+                } finally {
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                }
+            });
+
+            document.getElementById('sale-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const submitButton = this.querySelector('button[type="submit"]');
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+                submitButton.disabled = true;
+
+                const products = [];
+                const productElements = document.querySelectorAll('.sale-product');
+                const quantityElements = document.querySelectorAll('.sale-quantity');
+
+                productElements.forEach((product, index) => {
+                    if (product.value && quantityElements[index].value) {
+                        products.push({
+                            product_id: parseInt(product.value),
+                            quantity: parseInt(quantityElements[index].value)
+                        });
+                    }
+                });
+
+                if (products.length === 0) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Please add at least one product to the sale'
+                    });
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                    return;
+                }
+
+                const saleData = {
+                    customer_name: document.getElementById('customer-name').value,
+                    location: document.getElementById('sale-location').value,
+                    items: products
+                };
+
+                try {
+                    const response = await fetch('/api/sales', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': currentUser.csrfToken
+                        },
+                        body: JSON.stringify(saleData)
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to complete sale');
+                    }
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Sale Completed',
+                        html: `Sale completed successfully!<br>Total: <b>₹${data.total_amount.toLocaleString()}</b>`,
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+
+                    modals['sale'].style.display = 'none';
+                    resetSaleForm();
+                    loadData();
+                    loadSales();
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message
+                    });
+                } finally {
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                }
+            });
+
+            // Logout functionality
+            document.getElementById('logout-btn').addEventListener('click', async function() {
+                const result = await Swal.fire({
+                    title: 'Logout?',
+                    text: 'Are you sure you want to logout?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, logout'
+                });
+
+                if (result.isConfirmed) {
+                    try {
+                        await fetch('/api/logout', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-Token': currentUser.csrfToken
+                            }
+                        });
+                        sessionStorage.clear();
+                        window.location.href = '/login';
+                    } catch (error) {
+                        console.error('Logout failed:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Logout Failed',
+                            text: 'An error occurred while trying to logout'
+                        });
+                    }
+                }
+            });
+
+            // Notifications button
+            document.getElementById('notifications-btn').addEventListener('click', function() {
+                Swal.fire({
+                    title: 'Notifications',
+                    html: 'You have no new notifications',
+                    icon: 'info'
+                });
+            });
+        }
+
+        function resetSaleForm() {
+            const form = document.getElementById('sale-form');
+            form.reset();
+
+            // Reset products container to single row
+            const container = document.getElementById('sale-products-container');
+            container.innerHTML = `
+                <div class="product-row">
+                    <select class="sale-product form-control flex-1" required>
+                        <option value="">Select Product</option>
+                    </select>
+                    <input type="number" placeholder="Qty" class="sale-quantity form-control w-20" min="1" required>
+                    <button type="button" class="text-red-500 hover:text-red-700 remove-product-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            // Add event listeners to the new row
+            container.querySelector('.remove-product-btn').addEventListener('click', function() {
+                container.innerHTML = ''; // Don't allow removing the last row
+            });
+
+            container.querySelector('.sale-quantity').addEventListener('change', calculateSaleTotal);
+            container.querySelector('.sale-product').addEventListener('change', calculateSaleTotal);
+
+            document.getElementById('sale-total-amount').textContent = '₹0.00';
+        }
+
+        async function calculateSaleTotal() {
+            let total = 0;
+            const productElements = document.querySelectorAll('.sale-product');
+            const quantityElements = document.querySelectorAll('.sale-quantity');
+
+            for (let i = 0; i < productElements.length; i++) {
+                const productId = productElements[i].value;
+                const quantity = quantityElements[i].value;
+
+                if (productId && quantity) {
+                    try {
+                        // In a real app, we would cache product prices to avoid multiple requests
+                        const response = await fetch(`/api/products`);
+                        const products = await response.json();
+
+                        if (response.ok) {
+                            const product = products.find(p => p.id == productId);
+                            if (product) {
+                                total += product.price * parseInt(quantity);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error calculating sale total:', error);
+                    }
+                }
+            }
+
+            document.getElementById('sale-total-amount').textContent = `₹${total.toLocaleString('en-IN')}`;
+        }
+
+        async function loadData() {
+            try {
+                // Load dashboard stats
+                const statsResponse = await fetch('/api/dashboard/stats');
+                if (!statsResponse.ok) throw new Error('Failed to load dashboard stats');
+
+                const stats = await statsResponse.json();
+
+                document.getElementById('total-inventory').textContent = stats.total_inventory.toLocaleString();
+                document.getElementById('warehouse-stock').textContent = stats.warehouse_stock.toLocaleString();
+                document.getElementById('showroom-stock').textContent = stats.showroom_stock.toLocaleString();
+                document.getElementById('pending-transfers').textContent = stats.pending_transfers.toLocaleString();
+
+                // Update recent activity
+                const activityTable = document.getElementById('activity-table');
+                activityTable.innerHTML = '';
+
+                stats.recent_activity.forEach(activity => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${new Date(activity.created_at).toLocaleTimeString()}</td>
+                        <td>Transfer</td>
+                        <td>${activity.product_name}</td>
+                        <td>${activity.quantity} units</td>
+                        <td>${activity.from_location} → ${activity.to_location}</td>
+                        <td>
+                            <span class="badge ${
+                                activity.status === 'completed' ? 'badge-success' :
+                                activity.status === 'pending' ? 'badge-warning' : 'badge-danger'
+                            }">
+                                ${activity.status}
+                            </span>
+                        </td>
+                    `;
+                    activityTable.appendChild(row);
+                });
+
+                // Update tables
+                updateInventoryTable(7);
+                updateSalesTable(7);
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        async function updateInventoryTable(days) {
+            try {
+                const response = await fetch(`/api/dashboard/charts/inventory?days=${days}`);
+                if (!response.ok) throw new Error('Failed to load inventory data');
+
+                const data = await response.json();
+                const table = document.getElementById('inventory-movement-table');
+                table.innerHTML = '';
+
+                data.labels.forEach((label, index) => {
+                    const received = data.received[index] || 0;
+                    const transferred = data.transferred[index] || 0;
+                    const netChange = received - transferred;
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${label}</td>
+                        <td>${received.toLocaleString()}</td>
+                        <td>${transferred.toLocaleString()}</td>
+                        <td class="${netChange > 0 ? 'trend-up' : netChange < 0 ? 'trend-down' : 'trend-neutral'}">
+                            ${netChange > 0 ? '+' : ''}${netChange.toLocaleString()}
+                        </td>
+                    `;
+                    table.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error updating inventory table:', error);
+            }
+        }
+
+        async function updateSalesTable(days) {
+            try {
+                const response = await fetch(`/api/dashboard/charts/sales?days=${days}`);
+                if (!response.ok) throw new Error('Failed to load sales data');
+
+                const data = await response.json();
+                const table = document.getElementById('sales-performance-table');
+                table.innerHTML = '';
+
+                data.labels.forEach((label, index) => {
+                    const warehouse = data.warehouse_sales[index] || 0;
+                    const showroom = data.showroom_sales[index] || 0;
+                    const total = warehouse + showroom;
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${label}</td>
+                        <td>₹${warehouse.toLocaleString('en-IN')}</td>
+                        <td>₹${showroom.toLocaleString('en-IN')}</td>
+                        <td class="font-medium">₹${total.toLocaleString('en-IN')}</td>
+                    `;
+                    table.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error updating sales table:', error);
+            }
+        }
+
+        async function loadInventory() {
+            try {
+                const location = document.getElementById('inventory-filter').value;
+                const search = document.getElementById('inventory-search').value;
+
+                const response = await fetch(`/api/inventory?location=${location}&search=${search}&page=${currentInventoryPage}&per_page=${perPage}`);
+                if (!response.ok) throw new Error('Failed to load inventory');
+
+                const data = await response.json();
+                const inventoryTable = document.getElementById('inventory-table');
+                inventoryTable.innerHTML = '';
+
+                data.data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.id}</td>
+                        <td>${item.name}</td>
+                        <td>${item.brand}</td>
+                        <td>
+                            <span class="badge ${
+                                item.location === 'warehouse' ? 'badge-primary' : 'badge-accent'
+                            }">
+                                ${item.location}
+                            </span>
+                        </td>
+                        <td>${item.quantity}</td>
+                        <td>${new Date(item.last_updated).toLocaleString()}</td>
+                        <td>
+                            <button class="text-red-600 hover:text-red-800 delete-inventory" data-id="${item.id}" ${currentUser.role === 'showroom' ? 'disabled' : ''}>
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    inventoryTable.appendChild(row);
+                });
+
+                // Update pagination info
+                document.getElementById('inventory-pagination-info').textContent =
+                    `Showing ${((currentInventoryPage - 1) * perPage) + 1} to ${Math.min(currentInventoryPage * perPage, data.pagination.total)} of ${data.pagination.total} entries`;
+
+                // Update pagination controls
+                updatePagination('inventory', data.pagination);
+
+                // Add event listeners to delete buttons
+                document.querySelectorAll('.delete-inventory').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const inventoryId = this.dataset.id;
+                        deleteInventoryItem(inventoryId);
+                    });
+                });
+
+                // Add event listeners to filter and search
+                document.getElementById('inventory-filter').addEventListener('change', () => {
+                    currentInventoryPage = 1;
+                    loadInventory();
+                });
+
+                let searchTimeout;
+                document.getElementById('inventory-search').addEventListener('input', () => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        currentInventoryPage = 1;
+                        loadInventory();
+                    }, 500);
+                });
+            } catch (error) {
+                console.error('Error loading inventory:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load inventory data'
+                });
+            }
+        }
+
+        async function loadTransfers() {
+            try {
+                const status = document.getElementById('transfer-filter').value;
+
+                const response = await fetch(`/api/transfers?status=${status}&page=${currentTransfersPage}&per_page=${perPage}`);
+                if (!response.ok) throw new Error('Failed to load transfers');
+
+                const data = await response.json();
+                const transfersTable = document.getElementById('transfers-table');
+                transfersTable.innerHTML = '';
+
+                data.data.forEach(transfer => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${transfer.id}</td>
+                        <td>${transfer.product_name}</td>
+                        <td>${transfer.from_location}</td>
+                        <td>${transfer.to_location}</td>
+                        <td>${transfer.quantity}</td>
+                        <td>
+                            <span class="badge ${
+                                transfer.status === 'completed' ? 'badge-success' :
+                                transfer.status === 'pending' ? 'badge-warning' : 'badge-danger'
+                            }">
+                                ${transfer.status}
+                            </span>
+                        </td>
+                        <td>${transfer.initiated_by_name}</td>
+                        <td>${new Date(transfer.created_at).toLocaleDateString()}</td>
+                        <td class="flex space-x-2">
+                            ${transfer.status === 'pending' && (currentUser.role === 'admin' || currentUser.role === 'warehouse') ? `
+                            <button class="text-green-600 hover:text-green-800 complete-transfer" data-id="${transfer.id}">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            ` : ''}
+                            <button class="text-blue-600 hover:text-blue-800 view-transfer" data-id="${transfer.id}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    `;
+                    transfersTable.appendChild(row);
+                });
+
+                // Update pagination info
+                document.getElementById('transfers-pagination-info').textContent =
+                    `Showing ${((currentTransfersPage - 1) * perPage) + 1} to ${Math.min(currentTransfersPage * perPage, data.pagination.total)} of ${data.pagination.total} entries`;
+
+                // Update pagination controls
+                updatePagination('transfers', data.pagination);
+
+                // Add event listeners to complete transfer buttons
+                document.querySelectorAll('.complete-transfer').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const transferId = this.dataset.id;
+                        completeTransfer(transferId);
+                    });
+                });
+
+                // Add event listeners to view transfer buttons
+                document.querySelectorAll('.view-transfer').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const transferId = this.dataset.id;
+                        viewTransfer(transferId);
+                    });
+                });
+
+                // Add event listener to filter
+                document.getElementById('transfer-filter').addEventListener('change', () => {
+                    currentTransfersPage = 1;
+                    loadTransfers();
+                });
+            } catch (error) {
+                console.error('Error loading transfers:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load transfers data'
+                });
+            }
+        }
+
+        async function loadSales() {
+            try {
+                const location = document.getElementById('sales-filter').value;
+                const search = document.getElementById('sales-search').value;
+
+                const response = await fetch(`/api/sales?location=${location}&search=${search}&page=${currentSalesPage}&per_page=${perPage}`);
+                if (!response.ok) throw new Error('Failed to load sales');
+
+                const data = await response.json();
+                const salesTable = document.getElementById('sales-table');
+                salesTable.innerHTML = '';
+
+                data.data.forEach(sale => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${sale.id}</td>
+                        <td>${sale.customer_name || 'N/A'}</td>
+                        <td>
+                            <span class="badge ${
+                                sale.location === 'warehouse' ? 'badge-primary' : 'badge-accent'
+                            }">
+                                ${sale.location}
+                            </span>
+                        </td>
+                        <td>${sale.items_count} items</td>
+                        <td>₹${sale.total_amount.toLocaleString('en-IN')}</td>
+                        <td>${new Date(sale.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="text-blue-600 hover:text-blue-800 view-sale" data-id="${sale.id}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    `;
+                    salesTable.appendChild(row);
+                });
+
+                // Update pagination info
+                document.getElementById('sales-pagination-info').textContent =
+                    `Showing ${((currentSalesPage - 1) * perPage) + 1} to ${Math.min(currentSalesPage * perPage, data.pagination.total)} of ${data.pagination.total} entries`;
+
+                // Update pagination controls
+                updatePagination('sales', data.pagination);
+
+                // Add event listeners to view sale buttons
+                document.querySelectorAll('.view-sale').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const saleId = this.dataset.id;
+                        viewSaleDetails(saleId);
+                    });
+                });
+
+                // Add event listeners to filter and search
+                document.getElementById('sales-filter').addEventListener('change', () => {
+                    currentSalesPage = 1;
+                    loadSales();
+                });
+
+                let searchTimeout;
+                document.getElementById('sales-search').addEventListener('input', () => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        currentSalesPage = 1;
+                        loadSales();
+                    }, 500);
+                });
+            } catch (error) {
+                console.error('Error loading sales:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load sales data'
+                });
+            }
+        }
+
+        async function loadReports() {
+            try {
+                // Load inventory report
+                const inventoryResponse = await fetch('/api/inventory?location=all');
+                if (!inventoryResponse.ok) throw new Error('Failed to load inventory for reports');
+                const inventoryData = await inventoryResponse.json();
+
+                const warehouseStock = inventoryData.data.filter(item => item.location === 'warehouse').reduce((sum, item) => sum + item.quantity, 0);
+                const showroomStock = inventoryData.data.filter(item => item.location === 'showroom').reduce((sum, item) => sum + item.quantity, 0);
+                const totalStock = warehouseStock + showroomStock;
+
+                const inventoryTable = document.getElementById('inventory-report-table');
+                inventoryTable.innerHTML = `
+                    <tr>
+                        <td>Warehouse</td>
+                        <td>${inventoryData.data.filter(item => item.location === 'warehouse').length}</td>
+                        <td>${warehouseStock.toLocaleString()}</td>
+                        <td>${Math.round((warehouseStock / totalStock) * 100)}%</td>
+                    </tr>
+                    <tr>
+                        <td>Showroom</td>
+                        <td>${inventoryData.data.filter(item => item.location === 'showroom').length}</td>
+                        <td>${showroomStock.toLocaleString()}</td>
+                        <td>${Math.round((showroomStock / totalStock) * 100)}%</td>
+                    </tr>
+                    <tr class="font-medium">
+                        <td>Total</td>
+                        <td>${inventoryData.data.length}</td>
+                        <td>${totalStock.toLocaleString()}</td>
+                        <td>100%</td>
+                    </tr>
+                `;
+
+                // Load sales report
+                const salesResponse = await fetch('/api/sales');
+                if (!salesResponse.ok) throw new Error('Failed to load sales for reports');
+                const salesData = await salesResponse.json();
+
+                const warehouseSales = salesData.data.filter(sale => sale.location === 'warehouse');
+                const showroomSales = salesData.data.filter(sale => sale.location === 'showroom');
+
+                const warehouseTotal = warehouseSales.reduce((sum, sale) => sum + sale.total_amount, 0);
+                const showroomTotal = showroomSales.reduce((sum, sale) => sum + sale.total_amount, 0);
+                const totalSales = warehouseTotal + showroomTotal;
+
+                const salesTable = document.getElementById('sales-report-table');
+                salesTable.innerHTML = `
+                    <tr>
+                        <td>Warehouse</td>
+                        <td>${warehouseSales.length}</td>
+                        <td>₹${warehouseTotal.toLocaleString('en-IN')}</td>
+                        <td>₹${warehouseSales.length > 0 ? Math.round(warehouseTotal / warehouseSales.length).toLocaleString('en-IN') : 0}</td>
+                    </tr>
+                    <tr>
+                        <td>Showroom</td>
+                        <td>${showroomSales.length}</td>
+                        <td>₹${showroomTotal.toLocaleString('en-IN')}</td>
+                        <td>₹${showroomSales.length > 0 ? Math.round(showroomTotal / showroomSales.length).toLocaleString('en-IN') : 0}</td>
+                    </tr>
+                    <tr class="font-medium">
+                        <td>Total</td>
+                        <td>${salesData.data.length}</td>
+                        <td>₹${totalSales.toLocaleString('en-IN')}</td>
+                        <td>₹${salesData.data.length > 0 ? Math.round(totalSales / salesData.data.length).toLocaleString('en-IN') : 0}</td>
+                    </tr>
+                `;
+
+                // Load transfer report
+                const transfersResponse = await fetch('/api/transfers?status=completed');
+                if (!transfersResponse.ok) throw new Error('Failed to load transfers for reports');
+                const transfersData = await transfersResponse.json();
+
+                // Group transfers by month
+                const monthlyTransfers = {};
+
+                transfersData.data.forEach(transfer => {
+                    const date = new Date(transfer.completed_at);
+                    const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+
+                    if (!monthlyTransfers[monthYear]) {
+                        monthlyTransfers[monthYear] = {
+                            warehouseToShowroom: 0,
+                            showroomToWarehouse: 0
+                        };
+                    }
+
+                    if (transfer.from_location === 'warehouse' && transfer.to_location === 'showroom') {
+                        monthlyTransfers[monthYear].warehouseToShowroom += transfer.quantity;
+                    } else if (transfer.from_location === 'showroom' && transfer.to_location === 'warehouse') {
+                        monthlyTransfers[monthYear].showroomToWarehouse += transfer.quantity;
+                    }
+                });
+
+                // Prepare table data
+                const transferTable = document.getElementById('transfer-report-table');
+                transferTable.innerHTML = '';
+
+                Object.entries(monthlyTransfers).forEach(([monthYear, data]) => {
+                    const netMovement = data.warehouseToShowroom - data.showroomToWarehouse;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${monthYear}</td>
+                        <td>${data.warehouseToShowroom.toLocaleString()}</td>
+                        <td>${data.showroomToWarehouse.toLocaleString()}</td>
+                        <td class="${netMovement > 0 ? 'trend-up' : netMovement < 0 ? 'trend-down' : 'trend-neutral'}">
+                            ${netMovement > 0 ? '+' : ''}${netMovement.toLocaleString()}
+                        </td>
+                    `;
+                    transferTable.appendChild(row);
+                });
+
+                // Export buttons
+                document.getElementById('export-inventory-report').addEventListener('click', () => {
+                    exportTableAsCSV('inventory-report-table', 'inventory-report');
+                });
+
+                document.getElementById('export-sales-report').addEventListener('click', () => {
+                    exportTableAsCSV('sales-report-table', 'sales-report');
+                });
+
+                document.getElementById('export-transfer-report').addEventListener('click', () => {
+                    exportTableAsCSV('transfer-report-table', 'transfer-report');
+                });
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load reports data'
+                });
+            }
+        }
+
+        function exportTableAsCSV(tableId, filename) {
+            const table = document.getElementById(tableId);
+            const rows = table.querySelectorAll('tr');
+            let csvContent = '';
+
+            // Add headers
+            const headers = [];
+            table.querySelectorAll('th').forEach(header => {
+                headers.push(header.textContent);
+            });
+            csvContent += headers.join(',') + '\n';
+
+            // Add rows
+            rows.forEach(row => {
+                const rowData = [];
+                row.querySelectorAll('td').forEach(cell => {
+                    rowData.push(cell.textContent.replace(/,/g, ''));
+                });
+                csvContent += rowData.join(',') + '\n';
+            });
+
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${filename}-${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        async function loadProductsForTransfer() {
+            try {
+                const response = await fetch('/api/products');
+                if (!response.ok) throw new Error('Failed to load products for transfer');
+
+                const products = await response.json();
+                const select = document.getElementById('transfer-product');
+                select.innerHTML = '<option value="">Select Product</option>';
+
+                // Also get inventory data
+                const inventoryResponse = await fetch('/api/inventory?location=all');
+                if (!inventoryResponse.ok) throw new Error('Failed to load inventory data');
+                const inventoryData = await inventoryResponse.json();
+
+                products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+
+                    // Find inventory for this product
+                    const warehouseInventory = inventoryData.data.find(i =>
+                        i.product_id === product.id && i.location === 'warehouse');
+                    const showroomInventory = inventoryData.data.find(i =>
+                        i.product_id === product.id && i.location === 'showroom');
+
+                    const warehouseQty = warehouseInventory ? warehouseInventory.quantity : 0;
+                    const showroomQty = showroomInventory ? showroomInventory.quantity : 0;
+
+                    option.textContent = `${product.name} (${product.brand}) - W:${warehouseQty} S:${showroomQty}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading products for transfer:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load products for transfer'
+                });
+            }
+        }
+
+        async function loadProductsForSale() {
+            try {
+                const response = await fetch('/api/products');
+                if (!response.ok) throw new Error('Failed to load products for sale');
+
+                const products = await response.json();
+                const selects = document.querySelectorAll('.sale-product');
+
+                selects.forEach(select => {
+                    // Only populate if it's empty (has only the default option)
+                    if (select.options.length <= 1) {
+                        select.innerHTML = '<option value="">Select Product</option>';
+
+                        products.forEach(product => {
+                            const option = document.createElement('option');
+                            option.value = product.id;
+                            option.textContent = `${product.name} (${product.brand}) - ₹${product.price}`;
+                            select.appendChild(option);
+                        });
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading products for sale:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load products for sale'
+                });
+            }
+        }
+
+        async function populateProductSelect(selectElement) {
+            try {
+                const response = await fetch('/api/products');
+                if (!response.ok) throw new Error('Failed to load products');
+
+                const products = await response.json();
+                selectElement.innerHTML = '<option value="">Select Product</option>';
+
+                products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = `${product.name} (${product.brand}) - ₹${product.price}`;
+                    selectElement.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error populating product select:', error);
+            }
+        }
+
+        async function completeTransfer(transferId) {
+            const result = await Swal.fire({
+                title: 'Complete Transfer?',
+                text: 'Are you sure you want to complete this transfer?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, complete it'
+            });
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/transfers/${transferId}/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-Token': currentUser.csrfToken
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to complete transfer');
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Transfer completed successfully!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                loadTransfers();
+                loadData();
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message
+                });
+            }
+        }
+
+        async function deleteInventoryItem(inventoryId) {
+            const result = await Swal.fire({
+                title: 'Delete Inventory?',
+                text: 'Are you sure you want to delete this inventory item?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it'
+            });
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/inventory/${inventoryId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-Token': currentUser.csrfToken
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to delete inventory item');
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Inventory item deleted successfully!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                loadInventory();
+                loadData();
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message
+                });
+            }
+        }
+
+        async function viewTransfer(transferId) {
+            try {
+                const response = await fetch(`/api/transfers/${transferId}`);
+                if (!response.ok) throw new Error('Failed to load transfer details');
+
+                const transfer = await response.json();
+
+                Swal.fire({
+                    title: `Transfer #${transfer.id}`,
+                    html: `
+                        <div class="text-left space-y-2">
+                            <div><strong>Product:</strong> ${transfer.product_name}</div>
+                            <div><strong>From:</strong> ${transfer.from_location}</div>
+                            <div><strong>To:</strong> ${transfer.to_location}</div>
+                            <div><strong>Quantity:</strong> ${transfer.quantity}</div>
+                            <div><strong>Status:</strong> <span class="badge ${
+                                transfer.status === 'completed' ? 'badge-success' :
+                                transfer.status === 'pending' ? 'badge-warning' : 'badge-danger'
+                            }">${transfer.status}</span></div>
+                            <div><strong>Initiated By:</strong> ${transfer.initiated_by_name}</div>
+                            <div><strong>Created At:</strong> ${new Date(transfer.created_at).toLocaleString()}</div>
+                            ${transfer.completed_at ? `<div><strong>Completed At:</strong> ${new Date(transfer.completed_at).toLocaleString()}</div>` : ''}
+                        </div>
+                    `,
+                    confirmButtonText: 'Close'
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message
+                });
+            }
+        }
+
+        async function viewSaleDetails(saleId) {
+            try {
+                const response = await fetch(`/api/sales/${saleId}`);
+                if (!response.ok) throw new Error('Failed to load sale details');
+
+                const sale = await response.json();
+
+                // Fetch sale items
+                const itemsResponse = await fetch(`/api/sales/${saleId}/items`);
+                if (!itemsResponse.ok) throw new Error('Failed to load sale items');
+
+                const items = await itemsResponse.json();
+
+                let itemsHtml = '<div class="mt-4 border-t pt-4"><h4 class="font-medium mb-2">Products:</h4><ul class="space-y-2">';
+
+                items.forEach(item => {
+                    itemsHtml += `
+                        <li class="flex justify-between">
+                            <span>${item.product_name} (${item.brand})</span>
+                            <span>${item.quantity} x ₹${item.unit_price.toLocaleString('en-IN')} = ₹${(item.quantity * item.unit_price).toLocaleString('en-IN')}</span>
+                        </li>
+                    `;
+                });
+
+                itemsHtml += '</ul></div>';
+
+                Swal.fire({
+                    title: `Sale #${sale.id}`,
+                    html: `
+                        <div class="text-left space-y-2">
+                            <div><strong>Customer:</strong> ${sale.customer_name || 'N/A'}</div>
+                            <div><strong>Location:</strong> <span class="badge ${
+                                sale.location === 'warehouse' ? 'badge-primary' : 'badge-accent'
+                            }">${sale.location}</span></div>
+                            <div><strong>Total Amount:</strong> ₹${sale.total_amount.toLocaleString('en-IN')}</div>
+                            <div><strong>Created By:</strong> ${sale.created_by_name}</div>
+                            <div><strong>Created At:</strong> ${new Date(sale.created_at).toLocaleString()}</div>
+                            ${itemsHtml}
+                        </div>
+                    `,
+                    width: '600px',
+                    confirmButtonText: 'Close'
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message
+                });
+            }
+        }
+
+        function updatePagination(type, pagination) {
+            const container = document.getElementById(`${type}-pagination`);
+            container.innerHTML = '';
+
+            const totalPages = pagination.total_pages;
+            const currentPage = pagination.page;
+
+            // Previous button
+            const prevButton = document.createElement('button');
+            prevButton.className = `btn btn-outline ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}`;
+            prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevButton.disabled = currentPage === 1;
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    if (type === 'inventory') {
+                        currentInventoryPage = currentPage - 1;
+                        loadInventory();
+                    } else if (type === 'transfers') {
+                        currentTransfersPage = currentPage - 1;
+                        loadTransfers();
+                    } else if (type === 'sales') {
+                        currentSalesPage = currentPage - 1;
+                        loadSales();
+                    }
+                }
+            });
+            container.appendChild(prevButton);
+
+            // Page buttons
+            const maxVisibleButtons = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisibleButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
+
+            if (endPage - startPage + 1 < maxVisibleButtons) {
+                startPage = Math.max(1, endPage - maxVisibleButtons + 1);
+            }
+
+            if (startPage > 1) {
+                const firstButton = document.createElement('button');
+                firstButton.className = 'btn btn-outline';
+                firstButton.textContent = '1';
+                firstButton.addEventListener('click', () => {
+                    if (type === 'inventory') {
+                        currentInventoryPage = 1;
+                        loadInventory();
+                    } else if (type === 'transfers') {
+                        currentTransfersPage = 1;
+                        loadTransfers();
+                    } else if (type === 'sales') {
+                        currentSalesPage = 1;
+                        loadSales();
+                    }
+                });
+                container.appendChild(firstButton);
+
+                if (startPage > 2) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'px-3 py-1';
+                    ellipsis.textContent = '...';
+                    container.appendChild(ellipsis);
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.className = `btn ${i === currentPage ? 'btn-primary' : 'btn-outline'}`;
+                pageButton.textContent = i;
+                pageButton.addEventListener('click', () => {
+                    if (type === 'inventory') {
+                        currentInventoryPage = i;
+                        loadInventory();
+                    } else if (type === 'transfers') {
+                        currentTransfersPage = i;
+                        loadTransfers();
+                    } else if (type === 'sales') {
+                        currentSalesPage = i;
+                        loadSales();
+                    }
+                });
+                container.appendChild(pageButton);
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'px-3 py-1';
+                    ellipsis.textContent = '...';
+                    container.appendChild(ellipsis);
+                }
+
+                const lastButton = document.createElement('button');
+                lastButton.className = 'btn btn-outline';
+                lastButton.textContent = totalPages;
+                lastButton.addEventListener('click', () => {
+                    if (type === 'inventory') {
+                        currentInventoryPage = totalPages;
+                        loadInventory();
+                    } else if (type === 'transfers') {
+                        currentTransfersPage = totalPages;
+                        loadTransfers();
+                    } else if (type === 'sales') {
+                        currentSalesPage = totalPages;
+                        loadSales();
+                    }
+                });
+                container.appendChild(lastButton);
+            }
+
+            // Next button
+            const nextButton = document.createElement('button');
+            nextButton.className = `btn btn-outline ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}`;
+            nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    if (type === 'inventory') {
+                        currentInventoryPage = currentPage + 1;
+                        loadInventory();
+                    } else if (type === 'transfers') {
+                        currentTransfersPage = currentPage + 1;
+                        loadTransfers();
+                    } else if (type === 'sales') {
+                        currentSalesPage = currentPage + 1;
+                        loadSales();
+                    }
+                }
+            });
+            container.appendChild(nextButton);
+        }
+    </script>
+</body>
+</html>
