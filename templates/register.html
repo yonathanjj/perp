@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Plegma ERP</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        :root { --plegma-blue: #0000ff; }
+        body { background-color: #f8fafc; }
+        .register-container { background: white; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .input-field { border: 1px solid #d1d5db; }
+        .input-field:focus { border-color: var(--plegma-blue); outline: none; box-shadow: 0 0 0 2px rgba(0, 0, 255, 0.2); }
+        .btn-primary { background-color: var(--plegma-blue); color: white; }
+        .btn-primary:hover { background-color: #0000cc; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+<div class="register-container p-8 rounded-lg w-full max-w-md">
+    <div class="text-center mb-8">
+        <img src="/static/logo.png" alt="Plegma Logo" class="mx-auto h-16 w-auto mb-4">
+        <h1 class="text-2xl font-bold text-gray-900">Create Your Company Account</h1>
+        <p class="text-gray-600">Plegma Construction Material ERP</p>
+    </div>
+    <div id="errorMessage" class="hidden mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm"></div>
+    <div id="successMessage" class="hidden mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-sm"></div>
+    <form id="registerForm" class="space-y-6">
+        <div>
+            <label for="company_name" class="block text-sm font-medium text-gray-700">Company Name</label>
+            <div class="mt-1"><input type="text" id="company_name" name="company_name" required class="input-field w-full px-3 py-2 rounded-md"></div>
+        </div>
+        <div>
+            <!-- FIXED: Changed label to be more specific -->
+            <label for="username" class="block text-sm font-medium text-gray-700">Admin Email (This will be your username)</label>
+            <div class="mt-1"><input type="email" id="username" name="username" required class="input-field w-full px-3 py-2 rounded-md" placeholder="you@company.com"></div>
+        </div>
+        <div>
+            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+            <div class="mt-1"><input type="password" id="password" name="password" required class="input-field w-full px-3 py-2 rounded-md"></div>
+        </div>
+        <button type="submit" class="btn-primary w-full py-2 px-4 rounded-md font-semibold"><i class="fas fa-user-plus mr-2"></i>Create Account</button>
+    </form>
+    <p class="mt-6 text-center text-sm text-gray-600">Already have an account? <a href="/login" class="font-medium text-blue-600 hover:text-blue-500">Sign In</a></p>
+</div>
+<script>
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errorDiv = document.getElementById('errorMessage'), successDiv = document.getElementById('successMessage');
+        errorDiv.classList.add('hidden'); successDiv.classList.add('hidden');
+        const body = Object.fromEntries(new FormData(e.target));
+        const btn = e.target.querySelector('button'); btn.disabled = true;
+        try {
+            const res = await fetch('/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            successDiv.textContent = data.message + ' Redirecting to login...';
+            successDiv.classList.remove('hidden');
+            setTimeout(() => window.location.href = '/login', 2000);
+        } catch (err) {
+            errorDiv.textContent = err.message;
+            errorDiv.classList.remove('hidden');
+            btn.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>

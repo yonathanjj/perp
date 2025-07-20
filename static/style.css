@@ -1,3 +1,10 @@
+/* Plegma Brand Colors */
+:root {
+    --plegma-blue: #0000ff;
+    --plegma-white: #ddddff;
+    --plegma-black: #00000a;
+}
+
 /* Toast notifications */
 .toast {
     position: fixed;
@@ -20,11 +27,11 @@
 }
 
 .toast-success {
-    background-color: #4cc9f0;
+    background-color: #10b981; /* Green for success */
 }
 
 .toast-error {
-    background-color: #f72585;
+    background-color: #ef4444; /* Red for error */
 }
 
 /* Responsive tables */
@@ -34,14 +41,4 @@
         overflow-x: auto;
         white-space: nowrap;
     }
-}
-
-/* Additional utility classes */
-.text-muted {
-    color: #6c757d;
-}
-
-.btn-sm {
-    padding: 5px 10px;
-    font-size: 12px;
 }
