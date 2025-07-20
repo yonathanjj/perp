@@ -10,29 +10,30 @@
     <style>
         :root { --plegma-blue: #0000ff; --plegma-white: #ddddff; --plegma-black: #00000a; }
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .login-container { background: white; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .auth-container { background: white; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
         .role-btn { transition: all 0.2s ease; border: 2px solid #e5e7eb; }
         .role-btn.active { background-color: var(--plegma-white); border-color: var(--plegma-blue); color: var(--plegma-black); }
         .role-btn:hover:not(.active) { background-color: #f3f4f6; }
-        .input-field { border: 1px solid #d1d5db; transition: border-color 0.2s; }
-        .input-field:focus { border-color: var(--plegma-blue); outline: none; box-shadow: 0 0 0 2px rgba(0, 0, 255, 0.2); }
-        .login-btn { background-color: var(--plegma-blue); color: white; transition: background-color 0.2s; }
-        .login-btn:hover { background-color: #0000cc; }
+        .form-control { border: 1px solid #d1d5db; transition: all 0.2s ease-in-out; }
+        .form-control:focus { border-color: var(--plegma-blue); outline: none; box-shadow: 0 0 0 2px rgba(0, 0, 255, 0.2); }
+        .btn-primary { background-color: var(--plegma-blue); color: white; transition: background-color 0.2s; }
+        .btn-primary:hover:not(:disabled) { background-color: #0000cc; }
+        .btn-primary:disabled { background-color: #6b7280; cursor: not-allowed; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
-    <div class="login-container p-8 rounded-lg w-full max-w-md">
+    <div class="auth-container p-8 rounded-xl w-full max-w-md">
         <div class="text-center mb-8">
             <img src="/static/logo.png" alt="Plegma Logo" class="mx-auto h-16 w-auto mb-4">
-            <h1 class="text-2xl font-bold text-gray-900">Plegma ERP</h1>
+            <h1 class="text-2xl font-bold text-gray-900">Sign In to Plegma ERP</h1>
             <p class="text-gray-600">Construction Material Distributors</p>
         </div>
 
-        <div id="errorMessage" class="hidden mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm"></div>
+        <div id="message-container"></div>
 
-        <form id="loginForm" class="space-y-5">
+        <form id="loginForm" class="space-y-6">
             <div>
-                <label class="block text-gray-700 text-sm font-semibold mb-3">Select Your Role</label>
+                <label class="block text-gray-700 text-sm font-semibold mb-3">1. Select Your Role</label>
                 <div class="grid grid-cols-3 gap-3">
                     <button type="button" class="role-btn p-3 flex flex-col items-center space-y-1 font-medium rounded-md" data-role="admin"><i class="fas fa-user-shield text-xl"></i><span>Admin</span></button>
                     <button type="button" class="role-btn p-3 flex flex-col items-center space-y-1 font-medium rounded-md" data-role="warehouse"><i class="fas fa-warehouse text-xl"></i><span>Warehouse</span></button>
@@ -41,17 +42,25 @@
             </div>
 
             <div>
-                <label for="username" class="block text-sm font-medium text-gray-700">Username / Email</label>
-                <input type="text" id="username" name="username" required class="input-field w-full px-3 py-2 mt-1 rounded-md" placeholder="e.g., admin or you@example.com">
+                <label for="username" class="block text-sm font-medium text-gray-700">2. Enter Username / Email</label>
+                <div class="mt-1">
+                    <input type="text" id="username" name="username" required class="form-control w-full px-4 py-2 rounded-md" placeholder="e.g., admin or you@company.com">
+                </div>
             </div>
 
             <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                <input type="password" id="password" name="password" required class="input-field w-full px-3 py-2 mt-1 rounded-md" placeholder="Your password">
+                <label for="password" class="block text-sm font-medium text-gray-700">3. Enter Password</label>
+                <div class="mt-1 relative">
+                    <input type="password" id="password" name="password" required class="form-control w-full px-4 py-2 pr-10 rounded-md" placeholder="Your password">
+                    <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600" aria-label="Toggle password visibility">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
             </div>
 
-            <button type="submit" class="login-btn w-full py-2 px-4 rounded-md font-semibold">
-                <i class="fas fa-sign-in-alt mr-2"></i>Sign In
+            <button type="submit" class="btn-primary w-full py-2.5 px-4 rounded-md font-semibold flex items-center justify-center">
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                <span class="button-text">Sign In</span>
             </button>
         </form>
 
@@ -63,36 +72,58 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // --- Select all necessary elements from the DOM ---
         const roleButtons = document.querySelectorAll('.role-btn');
         const loginForm = document.getElementById('loginForm');
-        const errorMessageDiv = document.getElementById('errorMessage');
+        const passwordInput = document.getElementById('password');
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const messageContainer = document.getElementById('message-container');
         let selectedRole = null;
 
+        // --- Logic for Role Selection ---
         roleButtons.forEach(button => {
             button.addEventListener('click', () => {
+                messageContainer.innerHTML = ''; // Clear errors when user takes action
                 roleButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 selectedRole = button.dataset.role;
             });
         });
 
+        // --- Logic for Password Visibility Toggle ---
+        togglePasswordBtn.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            togglePasswordBtn.querySelector('i').classList.toggle('fa-eye');
+            togglePasswordBtn.querySelector('i').classList.toggle('fa-eye-slash');
+        });
+
+        // --- Logic for Form Submission ---
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            errorMessageDiv.classList.add('hidden');
+            messageContainer.innerHTML = ''; // Clear previous messages
 
+            // Validate that a role has been selected
             if (!selectedRole) {
-                showError('Please select your role.');
-                return;
+                showMessage('Please select your role first.');
+                return; // Stop the submission
             }
+
+            const submitButton = loginForm.querySelector('button[type="submit"]');
+            const buttonText = submitButton.querySelector('.button-text');
+            const originalButtonText = buttonText.textContent;
+
+            // Set button to a loading state to prevent multiple clicks
+            submitButton.disabled = true;
+            buttonText.textContent = 'Signing In...';
+            submitButton.querySelector('i').classList.replace('fa-sign-in-alt', 'fa-spinner');
+            submitButton.querySelector('i').classList.add('fa-spin');
+
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
 
-            const loginButton = loginForm.querySelector('button[type="submit"]');
-            const originalButtonText = loginButton.innerHTML;
-            loginButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Signing in...';
-            loginButton.disabled = true;
-
             try {
+                // Attempt to log in by calling the API
                 const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -100,20 +131,31 @@
                 });
 
                 const data = await response.json();
-                if (!response.ok) throw new Error(data.error || 'An unknown error occurred.');
+                if (!response.ok) {
+                    // If API returns an error, throw it to be caught by the catch block
+                    throw new Error(data.error || 'An unknown error occurred.');
+                }
 
+                // --- SUCCESS ---
+                // If login is successful, redirect to the main application page
                 window.location.href = '/';
             } catch (error) {
-                showError(error.message);
+                // --- FAILURE ---
+                // If an error was thrown, display it to the user
+                showMessage(error.message);
             } finally {
-                loginButton.innerHTML = originalButtonText;
-                loginButton.disabled = false;
+                // This block runs after success OR failure.
+                // Its main purpose is to re-enable the form if the login failed.
+                submitButton.disabled = false;
+                buttonText.textContent = originalButtonText;
+                submitButton.querySelector('i').classList.replace('fa-spinner', 'fa-sign-in-alt');
+                submitButton.querySelector('i').classList.remove('fa-spin');
             }
         });
 
-        function showError(message) {
-            errorMessageDiv.textContent = message;
-            errorMessageDiv.classList.remove('hidden');
+        // Helper function to display messages to the user
+        function showMessage(message) {
+            messageContainer.innerHTML = `<div class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">${message}</div>`;
         }
     });
 </script>

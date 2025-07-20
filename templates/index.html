@@ -6,6 +6,9 @@
     <title>Plegma ERP Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root { /* Plegma Brand Colors */
@@ -14,105 +17,156 @@
             --plegma-white: #ddddff; --plegma-black: #00000a; --danger: #ef4444;
             --warning: #f59e0b; --info: #06b6d4;
         }
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .sidebar { height: 100vh; overflow-y: auto; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .main-content { height: 100vh; overflow-y: auto; }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+
+        /* Sidebar and Layout */
+        .sidebar { transition: transform 0.3s ease-in-out; }
+        .main-content { transition: margin-left 0.3s ease-in-out; }
         .page { display: none; }
         .page.active { display: block; animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .metric-card { transition: all 0.3s ease; background-color: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
-        .metric-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+
+        /* General Components */
+        .card { background-color: #ffffff; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
+        .card-hover { transition: all 0.2s ease-in-out; }
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
         .nav-link.active { background-color: var(--plegma-white); color: var(--primary-dark); font-weight: 600; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .modal-content { background-color: white; border-radius: 0.75rem; width: 100%; max-width: 32rem; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-        .product-row { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; align-items: center; }
+        .modal { display: none; position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .modal-content { background-color: white; border-radius: 0.75rem; width: 95%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
         .badge { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
         .badge-primary { background-color: var(--plegma-white); color: var(--primary-dark); }
         .badge-success { background-color: #dcfce7; color: var(--secondary-dark); }
         .badge-warning { background-color: #fef3c7; color: #92400e; }
         .badge-danger { background-color: #fee2e2; color: #991b1b; }
-        .table-responsive { overflow-x: auto; }
-        .table { width: 100%; border-collapse: collapse; }
-        .table th, .table td { padding: 0.75rem 1rem; border-bottom: 1px solid #e2e8f0; text-align: left; }
-        .table th { font-weight: 600; color: #64748b; text-transform: uppercase; font-size: 0.75rem; }
-        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s ease; cursor: pointer; }
-        .btn-primary { background-color: var(--primary); color: white; }
-        .btn-primary:hover { background-color: var(--primary-dark); }
-        .btn-secondary { background-color: var(--secondary); color: white; }
-        .btn-secondary:hover { background-color: var(--secondary-dark); }
-        .btn-accent { background-color: var(--accent); color: white; }
-        .btn-accent:hover { background-color: var(--accent-dark); }
-        .btn-outline { background-color: transparent; border: 1px solid #cbd5e1; color: #334155; }
-        .btn-outline:hover { background-color: #f1f5f9; }
-        .form-control { width: 100%; padding: 0.5rem 1rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; }
-        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,0,255,0.2); }
-        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
-        .avatar { width: 2.5rem; height: 2.5rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center; background-color: var(--plegma-white); color: var(--primary-dark); font-weight: 600; }
+
+        /* Responsive Table: Transforms to cards on mobile */
+        @media (max-width: 767px) {
+            .responsive-table { border: 0; }
+            .responsive-table thead { display: none; }
+            .responsive-table tr {
+                display: block;
+                margin-bottom: 1rem;
+                border-radius: 0.5rem;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                border: 1px solid #e2e8f0;
+                background-color: #fff;
+            }
+            .responsive-table td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.75rem 1rem;
+                text-align: right;
+                border-bottom: 1px solid #f1f5f9;
+            }
+            .responsive-table td:last-child { border-bottom: 0; }
+            .responsive-table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                text-transform: uppercase;
+                font-size: 0.75rem;
+                color: #64748b;
+                margin-right: 1rem;
+                text-align: left;
+            }
+        }
+
+        /* Form Styles */
+        .form-control { width: 100%; padding: 0.5rem 1rem; border-radius: 0.375rem; border: 1px solid #cbd5e1; background-color: #f8fafc; }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,0,255,0.2); background-color: #fff; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #334155; }
+
+        /* Button Styles */
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.625rem 1rem; border-radius: 0.375rem; font-weight: 600; transition: all 0.2s ease; cursor: pointer; border: 1px solid transparent; }
+        .btn-primary { background-color: var(--primary); color: white; } .btn-primary:hover { background-color: var(--primary-dark); }
+        .btn-secondary { background-color: var(--secondary); color: white; } .btn-secondary:hover { background-color: var(--secondary-dark); }
+        .btn-accent { background-color: var(--accent); color: white; } .btn-accent:hover { background-color: var(--accent-dark); }
+        .btn-outline { background-color: transparent; border-color: #cbd5e1; color: #334155; } .btn-outline:hover { background-color: #f1f5f9; }
     </style>
 </head>
-<body class="flex h-screen bg-gray-50">
-    <!-- Sidebar -->
-    <aside class="sidebar w-64 flex flex-col">
-        <div class="p-6 border-b"><div class="flex items-center space-x-3"><img src="/static/logo.png" alt="Plegma Logo" class="h-10 w-auto"><span class="text-xl font-bold">Plegma ERP</span></div></div>
-        <div class="p-4 border-b flex items-center space-x-3">
-            <div class="avatar"><span id="avatar-initials"></span></div>
-            <div>
-                <div class="font-medium" id="username-display"></div>
-                <div class="text-xs font-semibold text-gray-600" id="company-name-display"></div>
-                <div class="text-xs text-gray-500" id="role-display"></div>
-            </div>
-        </div>
-        <nav class="flex-1 p-4 space-y-1">
-            <a href="#" data-page="dashboard" class="nav-link active flex items-center px-3 py-2 rounded-md"><i class="fas fa-home fa-fw w-5 mr-2"></i>Dashboard</a>
-            <a href="#" data-page="inventory" class="nav-link flex items-center px-3 py-2 rounded-md"><i class="fas fa-boxes fa-fw w-5 mr-2"></i>Inventory</a>
-            <a href="#" data-page="transfers" class="nav-link flex items-center px-3 py-2 rounded-md"><i class="fas fa-exchange-alt fa-fw w-5 mr-2"></i>Transfers</a>
-            <a href="#" data-page="sales" class="nav-link flex items-center px-3 py-2 rounded-md"><i class="fas fa-shopping-cart fa-fw w-5 mr-2"></i>Sales</a>
-            <a href="#" data-page="reports" class="nav-link flex items-center px-3 py-2 rounded-md"><i class="fas fa-chart-line fa-fw w-5 mr-2"></i>Reports</a>
-            <a href="#" data-page="users" id="users-nav-link" class="nav-link flex items-center px-3 py-2 rounded-md hidden"><i class="fas fa-users-cog fa-fw w-5 mr-2"></i>User Management</a>
-        </nav>
-        <div class="p-4 border-t"><button id="logout-btn" class="w-full btn btn-outline"><i class="fas fa-sign-out-alt mr-2"></i>Logout</button></div>
-    </aside>
+<body class="bg-gray-100">
 
-    <!-- Main Content -->
-    <main class="main-content flex-1 flex flex-col">
-        <header class="bg-white border-b p-4 flex justify-between items-center"><h1 class="text-xl font-bold" id="page-title"></h1></header>
-        <div class="flex-1 p-6 overflow-y-auto">
-            <div id="dashboard-page" class="page"></div>
-            <div id="inventory-page" class="page"></div>
-            <div id="transfers-page" class="page"></div>
-            <div id="sales-page" class="page"></div>
-            <div id="reports-page" class="page"></div>
-            <div id="users-page" class="page"></div>
-        </div>
-    </main>
+    <div class="relative min-h-screen md:flex">
+        <!-- Mobile menu overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar bg-white w-64 fixed inset-y-0 left-0 z-30 transform -translate-x-full md:relative md:translate-x-0 flex flex-col">
+            <div class="p-4 border-b h-16 flex items-center justify-center">
+                <div class="flex items-center space-x-3">
+                    <img src="/static/logo.png" alt="Plegma Logo" class="h-10 w-auto">
+                    <span class="text-xl font-bold text-gray-800">Plegma ERP</span>
+                </div>
+            </div>
+            <nav class="flex-1 p-4 space-y-1">
+                <a href="#" data-page="dashboard" class="nav-link active flex items-center px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"><i class="fas fa-home fa-fw w-5 mr-3"></i>Dashboard</a>
+                <a href="#" data-page="inventory" class="nav-link flex items-center px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"><i class="fas fa-boxes fa-fw w-5 mr-3"></i>Inventory</a>
+                <a href="#" data-page="transfers" class="nav-link flex items-center px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"><i class="fas fa-exchange-alt fa-fw w-5 mr-3"></i>Transfers</a>
+                <a href="#" data-page="sales" class="nav-link flex items-center px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"><i class="fas fa-shopping-cart fa-fw w-5 mr-3"></i>Sales</a>
+                <a href="#" data-page="reports" class="nav-link flex items-center px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"><i class="fas fa-chart-line fa-fw w-5 mr-3"></i>Reports</a>
+                <a href="#" data-page="users" id="users-nav-link" class="nav-link flex items-center px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 hidden"><i class="fas fa-users-cog fa-fw w-5 mr-3"></i>Users</a>
+            </nav>
+            <div class="p-4 border-t">
+                <button id="logout-btn" class="w-full btn btn-outline"><i class="fas fa-sign-out-alt mr-2"></i>Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content flex-1 flex flex-col">
+            <header class="bg-white border-b p-4 h-16 flex justify-between items-center sticky top-0 z-10">
+                <div class="flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-600 focus:outline-none md:hidden mr-4">
+                        <i class="fas fa-bars fa-lg"></i>
+                    </button>
+                    <h1 class="text-xl font-bold text-gray-800" id="page-title"></h1>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="text-right">
+                        <div class="font-medium text-gray-800" id="username-display"></div>
+                        <div class="text-xs font-semibold text-gray-600" id="role-display"></div>
+                    </div>
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold" id="avatar-initials"></div>
+                </div>
+            </header>
+            <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+                <div id="dashboard-page" class="page"></div>
+                <div id="inventory-page" class="page"></div>
+                <div id="transfers-page" class="page"></div>
+                <div id="sales-page" class="page"></div>
+                <div id="reports-page" class="page"></div>
+                <div id="users-page" class="page"></div>
+            </div>
+        </main>
+    </div>
 
     <!-- All Modals -->
-    <div id="add-inventory-modal" class="modal"><div class="modal-content p-6"><h3 class="text-lg font-medium mb-4">Add Inventory</h3><form id="add-inventory-form" class="space-y-4"><div><label class="form-label">Product Name</label><input type="text" name="name" class="form-control" required></div><div><label class="form-label">Brand</label><input type="text" name="brand" class="form-control" required></div><div><label class="form-label">Quantity</label><input type="number" name="quantity" class="form-control" min="1" required></div><div><label class="form-label">Location</label><select name="location_id" class="form-control" required></select></div><div class="flex justify-end space-x-3 pt-4"><button type="button" class="btn-cancel btn btn-outline">Cancel</button><button type="submit" class="btn btn-primary">Add</button></div></form></div></div>
-    <div id="transfer-modal" class="modal"><div class="modal-content p-6"><h3 class="text-lg font-medium mb-4">Create Transfer</h3><form id="transfer-form" class="space-y-4"><div><label class="form-label">Product</label><select name="product_id" class="form-control" required></select></div><div><label class="form-label">From Location</label><select name="from_location_id" class="form-control" required></select></div><div><label class="form-label">To Location</label><select name="to_location_id" class="form-control" required></select></div><div><label class="form-label">Quantity</label><input type="number" name="quantity" class="form-control" min="1" required></div><div class="flex justify-end space-x-3 pt-4"><button type="button" class="btn-cancel btn btn-outline">Cancel</button><button type="submit" class="btn btn-secondary">Create Transfer</button></div></form></div></div>
-    <div id="sale-modal" class="modal"><div class="modal-content p-6" style="max-width: 48rem;"><h3 class="text-lg font-medium mb-4">New Sale</h3><form id="sale-form" class="space-y-4"><div class="grid grid-cols-2 gap-4"><div><label class="form-label">Sale Location</label><select name="location_id" class="form-control" required></select></div><div><label class="form-label">Customer Name (Optional)</label><input type="text" name="customer_name" class="form-control"></div></div><div><label class="form-label">Products</label><div id="sale-products-container" class="space-y-2"></div><button type="button" id="add-product-btn" class="mt-2 text-sm text-blue-600 hover:text-blue-800"><i class="fas fa-plus mr-1"></i>Add Product</button></div><div class="p-3 bg-gray-50 rounded flex justify-between font-bold text-lg"><span class="font-medium">Total:</span><span id="sale-total-amount">₹0.00</span></div><div class="flex justify-end space-x-3 pt-4"><button type="button" class="btn-cancel btn btn-outline">Cancel</button><button type="submit" class="btn btn-accent">Complete Sale</button></div></form></div></div>
-    <div id="add-user-modal" class="modal"><div class="modal-content p-6"><h3 class="text-lg font-medium mb-4">Add New User</h3><form id="add-user-form" class="space-y-4"><div><label class="form-label">Username (Email)</label><input type="email" name="username" class="form-control" required></div><div><label class="form-label">Password</label><input type="password" name="password" class="form-control" required></div><div><label class="form-label">Role</label><select name="role" class="form-control" required><option value="" disabled selected>Select role...</option><option value="warehouse">Warehouse</option><option value="showroom">Showroom</option></select></div><div class="flex justify-end space-x-3 pt-4"><button type="button" class="btn-cancel btn btn-outline">Cancel</button><button type="submit" class="btn btn-primary">Create User</button></div></form></div></div>
+    <div id="add-inventory-modal" class="modal"><div class="modal-content p-6 sm:p-8 max-w-lg"><h3 class="text-xl font-semibold mb-4 text-gray-800">Add Inventory</h3><form id="add-inventory-form" class="space-y-4"><div><label class="form-label" for="inv-name">Product Name</label><input id="inv-name" type="text" name="name" class="form-control" required></div><div><label class="form-label" for="inv-brand">Brand</label><input id="inv-brand" type="text" name="brand" class="form-control" required></div><div><label class="form-label" for="inv-qty">Quantity</label><input id="inv-qty" type="number" name="quantity" class="form-control" min="1" required></div><div><label class="form-label" for="inv-loc">Location</label><select id="inv-loc" name="location_id" class="form-control" required></select></div><div class="flex justify-end space-x-3 pt-6"><button type="button" class="btn-cancel btn btn-outline">Cancel</button><button type="submit" class="btn btn-primary">Add Stock</button></div></form></div></div>
+    <div id="transfer-modal" class="modal"><div class="modal-content p-6 sm:p-8 max-w-lg"><h3 class="text-xl font-semibold mb-4 text-gray-800">Create Transfer</h3><form id="transfer-form" class="space-y-4"><div><label class="form-label">Product</label><select name="product_id" class="form-control" required></select></div><div><label class="form-label">From Location</label><select name="from_location_id" class="form-control" required></select></div><div><label class="form-label">To Location</label><select name="to_location_id" class="form-control" required></select></div><div><label class="form-label">Quantity</label><input type="number" name="quantity" class="form-control" min="1" required></div><div class="flex justify-end space-x-3 pt-6"><button type="button" class="btn-cancel btn btn-outline">Cancel</button><button type="submit" class="btn btn-secondary">Create Transfer</button></div></form></div></div>
+    <div id="sale-modal" class="modal"><div class="modal-content p-6 sm:p-8" style="max-width: 48rem;"><h3 class="text-xl font-semibold mb-4 text-gray-800">New Sale</h3><form id="sale-form" class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="form-label">Sale Location</label><select name="location_id" class="form-control" required></select></div><div><label class="form-label">Customer Name (Optional)</label><input type="text" name="customer_name" class="form-control"></div></div><div><label class="form-label">Products</label><div id="sale-products-container" class="space-y-3"></div><button type="button" id="add-product-btn" class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-semibold"><i class="fas fa-plus mr-1"></i>Add Product</button></div><div class="p-4 bg-gray-50 rounded-lg flex justify-between items-center font-bold text-lg mt-4"><span class="font-medium text-gray-700">Total:</span><span id="sale-total-amount" class="text-gray-900">₹0.00</span></div><div class="flex justify-end space-x-3 pt-6"><button type="button" class="btn-cancel btn btn-outline">Cancel</button><button type="submit" class="btn btn-accent">Complete Sale</button></div></form></div></div>
+    <div id="add-user-modal" class="modal"><div class="modal-content p-6 sm:p-8 max-w-lg"><h3 class="text-xl font-semibold mb-4 text-gray-800">Add New User</h3><form id="add-user-form" class="space-y-4"><div><label class="form-label">Username (Email)</label><input type="email" name="username" class="form-control" required></div><div><label class="form-label">Password</label><input type="password" name="password" class="form-control" required></div><div><label class="form-label">Role</label><select name="role" class="form-control" required><option value="" disabled selected>Select role...</option><option value="warehouse">Warehouse</option><option value="showroom">Showroom</option><option value="admin">Admin</option></select></div><div class="flex justify-end space-x-3 pt-6"><button type="button" class="btn-cancel btn btn-outline">Cancel</button><button type="submit" class="btn btn-primary">Create User</button></div></form></div></div>
 
 <script>
     document.addEventListener('DOMContentLoaded', async () => {
+        // --- State and Caches ---
         let currentUser, csrfToken, productsCache = [], locationsCache = [], currentReportData = [];
 
+        // --- API Helper ---
         const api = async (endpoint, method = 'GET', body = null) => {
             const opts = { method, headers: { 'X-CSRF-Token': csrfToken, 'Content-Type': 'application/json' } };
             if (body) opts.body = JSON.stringify(body);
             try {
                 const res = await fetch(`/api${endpoint}`, opts);
+                if (res.status === 401) { window.location.href = '/login'; return; }
                 const data = await res.json();
-                if (!res.ok) {
-                    if(res.status === 401) window.location.href = '/login';
-                    throw new Error(data.error || 'API Error');
-                }
+                if (!res.ok) throw new Error(data.error || 'An unknown API error occurred.');
                 return data;
             } catch (error) {
-                Swal.fire({ icon: 'error', title: 'Error', text: error.message });
+                Swal.fire({ icon: 'error', title: 'Oops...', text: error.message });
                 throw error;
             }
         };
 
+        // --- Initialization ---
         const init = async () => {
             try {
                 const authData = await api('/check-auth');
@@ -120,82 +174,129 @@
                 currentUser = authData.user;
                 csrfToken = (await api('/csrf-token')).csrf_token;
                 await Promise.all([loadProducts(), loadLocations()]);
-                updateUI(); setupEventListeners(); navigateTo(window.location.hash.substring(1));
-            } catch (e) { console.error('Init failed', e); }
+                updateUI();
+                setupEventListeners();
+                const initialPage = window.location.hash.substring(1) || 'dashboard';
+                navigateTo(initialPage, true);
+            } catch (e) { console.error('Initialization failed:', e); }
         };
+
+        // --- Data Loading ---
         const loadProducts = async () => productsCache = await api('/products');
         const loadLocations = async () => locationsCache = await api('/locations');
 
+        // --- UI Updates & Navigation ---
         const updateUI = () => {
-            const { username, role, company_name } = currentUser;
+            const { username, role } = currentUser;
             document.getElementById('username-display').textContent = username;
-            document.getElementById('company-name-display').textContent = company_name;
             document.getElementById('role-display').textContent = `${role.charAt(0).toUpperCase() + role.slice(1)} Staff`;
             document.getElementById('avatar-initials').textContent = username.charAt(0).toUpperCase();
-            if (role === 'admin') document.getElementById('users-nav-link').classList.remove('hidden');
+            if (role === 'admin') {
+                document.getElementById('users-nav-link').classList.remove('hidden');
+            }
         };
 
-        const navigateTo = (pageId) => {
+        const navigateTo = (pageId, isInitialLoad = false) => {
             pageId = pageId || 'dashboard';
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(`${pageId}-page`).classList.add('active');
             document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.page === pageId));
-            document.getElementById('page-title').textContent = pageId.charAt(0).toUpperCase() + pageId.slice(1);
-            window.location.hash = pageId;
-            const renderFunc = window[`render${pageId.charAt(0).toUpperCase() + pageId.slice(1)}Page`];
+            const pageTitle = pageId.charAt(0).toUpperCase() + pageId.slice(1);
+            document.getElementById('page-title').textContent = pageTitle;
+            if (!isInitialLoad) window.location.hash = pageId;
+
+            const renderFunc = window[`render${pageTitle}Page`];
             if (renderFunc) renderFunc();
+
+            // Close mobile sidebar on navigation
+            const sidebar = document.getElementById('sidebar');
+            if(!sidebar.classList.contains('md:relative')) { // a proxy for mobile view
+                 toggleSidebar(false);
+            }
         };
 
+        const toggleSidebar = (show) => {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (show) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        };
+
+        // --- Event Listeners Setup ---
         const setupEventListeners = () => {
             document.querySelectorAll('.nav-link').forEach(link => link.addEventListener('click', e => { e.preventDefault(); navigateTo(link.dataset.page); }));
+            document.getElementById('mobile-menu-btn').addEventListener('click', () => toggleSidebar(true));
+            document.getElementById('sidebar-overlay').addEventListener('click', () => toggleSidebar(false));
             document.querySelectorAll('.btn-cancel').forEach(btn => btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none'));
             document.getElementById('logout-btn').addEventListener('click', async () => { await api('/logout', 'POST'); window.location.href = '/login'; });
-            document.getElementById('add-inventory-form').addEventListener('submit', handleFormSubmit);
-            document.getElementById('transfer-form').addEventListener('submit', handleFormSubmit);
-            document.getElementById('sale-form').addEventListener('submit', handleFormSubmit);
-            document.getElementById('add-user-form').addEventListener('submit', handleFormSubmit);
+
+            // Form Submissions
+            ['add-inventory-form', 'transfer-form', 'sale-form', 'add-user-form'].forEach(formId => {
+                const form = document.getElementById(formId);
+                if (form) form.addEventListener('submit', handleFormSubmit);
+            });
         };
 
+        // --- Page Renderers ---
         window.renderDashboardPage = async () => {
             const container = document.getElementById('dashboard-page');
             const stats = await api('/dashboard/stats');
-            container.innerHTML = `<h2 class="text-2xl font-bold mb-4">Welcome back, ${currentUser.username}!</h2><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><button class="metric-card p-4 flex items-center justify-center space-x-2 hover:bg-gray-50" onclick="openAddInventoryModal()"><div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center"><i class="fas fa-plus text-blue-600"></i></div><span>Add Inventory</span></button><button class="metric-card p-4 flex items-center justify-center space-x-2 hover:bg-gray-50" onclick="openTransferModal()"><div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center"><i class="fas fa-exchange-alt text-green-600"></i></div><span>Transfer Items</span></button><button class="metric-card p-4 flex items-center justify-center space-x-2 hover:bg-gray-50" onclick="openSaleModal()"><div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center"><i class="fas fa-shopping-cart text-purple-600"></i></div><span>New Sale</span></button></div><div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6"><div class="metric-card p-4"><div class="text-gray-500 text-sm mb-1">Total Inventory</div><div class="text-2xl font-bold">${(stats.total_inventory||0).toLocaleString()}</div></div><div class="metric-card p-4"><div class="text-gray-500 text-sm mb-1">Warehouse Stock</div><div class="text-2xl font-bold">${(stats.warehouse_stock||0).toLocaleString()}</div></div><div class="metric-card p-4"><div class="text-gray-500 text-sm mb-1">Showroom Stock</div><div class="text-2xl font-bold">${(stats.showroom_stock||0).toLocaleString()}</div></div><div class="metric-card p-4"><div class="text-gray-500 text-sm mb-1">Pending Transfers</div><div class="text-2xl font-bold text-yellow-600">${(stats.pending_transfers||0).toLocaleString()}</div></div></div><div class="metric-card p-4"><h3 class="font-medium text-gray-800 mb-4">Recent Activity</h3><div class="table-responsive"><table class="table"><thead><tr><th>Time</th><th>Details</th><th>User</th></tr></thead><tbody>${(stats.recent_activity||[]).map(act=>`<tr><td>${new Date(act.created_at).toLocaleTimeString()}</td><td>Transfer: ${act.quantity} x ${act.product_name} from ${act.from_location} to ${act.to_location}</td><td>${act.initiated_by_name}</td></tr>`).join('')}</tbody></table></div></div>`;};
+            container.innerHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="card p-4"><div class="text-gray-500 text-sm mb-1">Total Inventory</div><div class="text-3xl font-bold">${(stats.total_inventory||0).toLocaleString()}</div></div>
+                    <div class="card p-4"><div class="text-gray-500 text-sm mb-1">Warehouse Stock</div><div class="text-3xl font-bold">${(stats.warehouse_stock||0).toLocaleString()}</div></div>
+                    <div class="card p-4"><div class="text-gray-500 text-sm mb-1">Showroom Stock</div><div class="text-3xl font-bold">${(stats.showroom_stock||0).toLocaleString()}</div></div>
+                    <div class="card p-4"><div class="text-gray-500 text-sm mb-1">Pending Transfers</div><div class="text-3xl font-bold text-yellow-600">${(stats.pending_transfers||0).toLocaleString()}</div></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <button class="card card-hover p-6 flex items-center justify-center space-x-4" onclick="openAddInventoryModal()"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><i class="fas fa-plus text-xl text-blue-600"></i></div><span class="text-lg font-semibold text-gray-700">Add Inventory</span></button>
+                    <button class="card card-hover p-6 flex items-center justify-center space-x-4" onclick="openTransferModal()"><div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><i class="fas fa-exchange-alt text-xl text-green-600"></i></div><span class="text-lg font-semibold text-gray-700">Transfer Items</span></button>
+                    <button class="card card-hover p-6 flex items-center justify-center space-x-4" onclick="openSaleModal()"><div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><i class="fas fa-shopping-cart text-xl text-purple-600"></i></div><span class="text-lg font-semibold text-gray-700">New Sale</span></button>
+                </div>
+                <div class="card p-4 sm:p-6"><h3 class="text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3><div><table class="w-full responsive-table"><thead><tr class="text-left text-xs text-gray-500 uppercase"><th>Time</th><th>Details</th><th>User</th></tr></thead><tbody>${(stats.recent_activity||[]).map(act=>`<tr><td data-label="Time">${new Date(act.created_at).toLocaleTimeString()}</td><td data-label="Details">Transfer: ${act.quantity} x ${act.product_name} from ${act.from_location} to ${act.to_location}</td><td data-label="User">${act.initiated_by_name}</td></tr>`).join('')}</tbody></table></div></div>`;
+        };
         window.renderInventoryPage = async (page = 1) => {
             const container = document.getElementById('inventory-page');
-            container.innerHTML = `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">Inventory</h2><button class="btn btn-primary" onclick="openAddInventoryModal()"><i class="fas fa-plus mr-2"></i>Add Stock</button></div><div class="metric-card"><div class="table-responsive"><table class="table"><thead><tr><th>Product</th><th>Brand</th><th>Location</th><th>Quantity</th><th>Actions</th></tr></thead><tbody id="inventory-table-body"></tbody></table></div><div class="flex justify-between items-center p-4" id="inventory-pagination"></div></div>`;
+            container.innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4"><h2 class="text-2xl font-bold text-gray-800">Inventory</h2><button class="btn btn-primary w-full sm:w-auto" onclick="openAddInventoryModal()"><i class="fas fa-plus mr-2"></i>Add Stock</button></div><div class="card"><div class="overflow-x-auto"><table class="w-full text-sm text-left responsive-table"><thead><tr class="text-xs text-gray-500 uppercase bg-gray-50"><th class="p-4">Product</th><th class="p-4">Brand</th><th class="p-4">Location</th><th class="p-4">Quantity</th><th class="p-4">Actions</th></tr></thead><tbody id="inventory-table-body" class="bg-white"></tbody></table></div><div class="flex flex-col sm:flex-row justify-between items-center p-4" id="inventory-pagination"></div></div>`;
             const result = await api(`/inventory?page=${page}`);
-            document.getElementById('inventory-table-body').innerHTML = result.data.map(i => `<tr><td>${i.name}</td><td>${i.brand}</td><td>${i.location_name}</td><td>${i.quantity.toLocaleString()}</td><td><button class="text-red-600" onclick="deleteInventoryItem(${i.id})"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+            document.getElementById('inventory-table-body').innerHTML = result.data.map(i => `<tr><td class="p-4" data-label="Product">${i.name}</td><td class="p-4" data-label="Brand">${i.brand}</td><td class="p-4" data-label="Location">${i.location_name}</td><td class="p-4" data-label="Quantity">${i.quantity.toLocaleString()}</td><td class="p-4" data-label="Actions"><button class="text-red-600 hover:text-red-800" onclick="deleteInventoryItem(${i.id})"><i class="fas fa-trash"></i></button></td></tr>`).join('');
             renderPagination('inventory', result.pagination, renderInventoryPage);
         };
         window.renderTransfersPage = async (page = 1) => {
             const container = document.getElementById('transfers-page');
-            container.innerHTML = `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">Transfers</h2><button class="btn btn-secondary" onclick="openTransferModal()"><i class="fas fa-exchange-alt mr-2"></i>New Transfer</button></div><div class="metric-card"><div class="table-responsive"><table class="table"><thead><tr><th>ID</th><th>Product</th><th>From → To</th><th>Qty</th><th>Status</th><th>Date</th></tr></thead><tbody id="transfers-table-body"></tbody></table></div><div class="flex justify-between items-center p-4" id="transfers-pagination"></div></div>`;
+            container.innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4"><h2 class="text-2xl font-bold text-gray-800">Transfers</h2><button class="btn btn-secondary w-full sm:w-auto" onclick="openTransferModal()"><i class="fas fa-exchange-alt mr-2"></i>New Transfer</button></div><div class="card"><div class="overflow-x-auto"><table class="w-full text-sm responsive-table"><thead><tr class="text-xs text-gray-500 uppercase bg-gray-50"><th class="p-4">ID</th><th class="p-4">Product</th><th class="p-4">From → To</th><th class="p-4">Qty</th><th class="p-4">Status</th><th class="p-4">Date</th></tr></thead><tbody id="transfers-table-body" class="bg-white"></tbody></table></div><div class="flex flex-col sm:flex-row justify-between items-center p-4" id="transfers-pagination"></div></div>`;
             const result = await api(`/transfers?page=${page}`);
-            document.getElementById('transfers-table-body').innerHTML = result.data.map(t => `<tr><td>#${t.id}</td><td>${t.product_name}</td><td>${t.from_location_name} → ${t.to_location_name}</td><td>${t.quantity}</td><td><span class="badge badge-success">${t.status}</span></td><td>${new Date(t.created_at).toLocaleDateString()}</td></tr>`).join('');
+            document.getElementById('transfers-table-body').innerHTML = result.data.map(t => `<tr><td class="p-4" data-label="ID">#${t.id}</td><td class="p-4" data-label="Product">${t.product_name}</td><td class="p-4" data-label="From → To">${t.from_location_name} → ${t.to_location_name}</td><td class="p-4" data-label="Qty">${t.quantity}</td><td class="p-4" data-label="Status"><span class="badge badge-success">${t.status}</span></td><td class="p-4" data-label="Date">${new Date(t.created_at).toLocaleDateString()}</td></tr>`).join('');
             renderPagination('transfers', result.pagination, renderTransfersPage);
         };
         window.renderSalesPage = async (page = 1) => {
             const container = document.getElementById('sales-page');
-            container.innerHTML = `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">Sales</h2><button class="btn btn-accent" onclick="openSaleModal()"><i class="fas fa-shopping-cart mr-2"></i>New Sale</button></div><div class="metric-card"><div class="table-responsive"><table class="table"><thead><tr><th>ID</th><th>Customer</th><th>Location</th><th>Items</th><th>Total</th><th>Date</th><th>Details</th></tr></thead><tbody id="sales-table-body"></tbody></table></div><div class="flex justify-between items-center p-4" id="sales-pagination"></div></div>`;
+            container.innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4"><h2 class="text-2xl font-bold text-gray-800">Sales</h2><button class="btn btn-accent w-full sm:w-auto" onclick="openSaleModal()"><i class="fas fa-shopping-cart mr-2"></i>New Sale</button></div><div class="card"><div class="overflow-x-auto"><table class="w-full text-sm responsive-table"><thead><tr class="text-xs text-gray-500 uppercase bg-gray-50"><th class="p-4">ID</th><th class="p-4">Customer</th><th class="p-4">Location</th><th class="p-4">Items</th><th class="p-4">Total</th><th class="p-4">Date</th><th class="p-4">Details</th></tr></thead><tbody id="sales-table-body" class="bg-white"></tbody></table></div><div class="flex flex-col sm:flex-row justify-between items-center p-4" id="sales-pagination"></div></div>`;
             const result = await api(`/sales?page=${page}`);
-            document.getElementById('sales-table-body').innerHTML = result.data.map(s => `<tr><td>#${s.id}</td><td>${s.customer_name||'N/A'}</td><td>${s.location_name}</td><td>${s.items_count}</td><td>₹${s.total_amount.toLocaleString()}</td><td>${new Date(s.created_at).toLocaleDateString()}</td><td><button class="text-blue-600" onclick="viewSaleDetails(${s.id})"><i class="fas fa-eye"></i></button></td></tr>`).join('');
+            document.getElementById('sales-table-body').innerHTML = result.data.map(s => `<tr><td class="p-4" data-label="ID">#${s.id}</td><td class="p-4" data-label="Customer">${s.customer_name||'N/A'}</td><td class="p-4" data-label="Location">${s.location_name}</td><td class="p-4" data-label="Items">${s.items_count}</td><td class="p-4" data-label="Total">₹${s.total_amount.toLocaleString()}</td><td class="p-4" data-label="Date">${new Date(s.created_at).toLocaleDateString()}</td><td class="p-4" data-label="Details"><button class="text-blue-600 hover:text-blue-800" onclick="viewSaleDetails(${s.id})"><i class="fas fa-eye"></i></button></td></tr>`).join('');
             renderPagination('sales', result.pagination, renderSalesPage);
         };
         window.renderUsersPage = async () => {
             if (currentUser.role !== 'admin') return;
             const users = await api('/users');
-            document.getElementById('users-page').innerHTML = `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">User Management</h2><button id="add-user-btn" class="btn btn-primary"><i class="fas fa-plus mr-2"></i>Add User</button></div><div class="metric-card"><div class="table-responsive"><table class="table"><thead><tr><th>Username</th><th>Role</th><th>Created</th><th>Actions</th></tr></thead><tbody>${users.map(u => `<tr><td>${u.username}</td><td><span class="badge ${u.role === 'admin' ? 'badge-danger' : 'badge-primary'}">${u.role}</span></td><td>${new Date(u.created_at).toLocaleDateString()}</td><td>${u.id !== currentUser.id ? `<button class="text-red-600" onclick="deleteUser(${u.id},'${u.username}')"><i class="fas fa-trash"></i></button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
+            document.getElementById('users-page').innerHTML = `<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4"><h2 class="text-2xl font-bold text-gray-800">User Management</h2><button id="add-user-btn" class="btn btn-primary w-full sm:w-auto"><i class="fas fa-plus mr-2"></i>Add User</button></div><div class="card"><div class="overflow-x-auto"><table class="w-full responsive-table"><thead><tr class="text-xs text-gray-500 uppercase bg-gray-50"><th class="p-4">Username</th><th class="p-4">Role</th><th class="p-4">Created</th><th class="p-4">Actions</th></tr></thead><tbody class="bg-white">${users.map(u => `<tr><td class="p-4" data-label="Username">${u.username}</td><td class="p-4" data-label="Role"><span class="badge ${u.role === 'admin' ? 'badge-danger' : 'badge-primary'}">${u.role}</span></td><td class="p-4" data-label="Created">${new Date(u.created_at).toLocaleDateString()}</td><td class="p-4" data-label="Actions">${u.id !== currentUser.id ? `<button class="text-red-600 hover:text-red-800" onclick="deleteUser(${u.id},'${u.username}')"><i class="fas fa-trash"></i></button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
             document.getElementById('add-user-btn').addEventListener('click', () => { document.getElementById('add-user-form').reset(); openModal('add-user-modal'); });
         };
         window.renderReportsPage = () => {
             const today = new Date().toISOString().split('T')[0];
             const thirtyDaysAgo = new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0];
-            document.getElementById('reports-page').innerHTML = `<h2 class="text-2xl font-bold mb-6">Reports</h2><div class="metric-card p-4"><div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4"><div><label class="form-label">Report Type</label><select id="report-type" class="form-control"><option value="sales">Sales</option><option value="transfers">Transfers</option></select></div><div><label class="form-label">Start Date</label><input type="date" id="report-start-date" class="form-control" value="${thirtyDaysAgo}"></div><div><label class="form-label">End Date</label><input type="date" id="report-end-date" class="form-control" value="${today}"></div><div class="self-end"><button id="generate-report-btn" class="btn btn-primary w-full"><i class="fas fa-cogs mr-2"></i>Generate</button></div></div><div class="flex justify-end mb-4"><button id="export-report-btn" class="btn btn-outline hidden"><i class="fas fa-download mr-2"></i>Export as CSV</button></div><div class="table-responsive"><table class="table"><thead id="report-table-head"></thead><tbody id="report-table-body"></tbody></table></div></div>`;
+            document.getElementById('reports-page').innerHTML = `<h2 class="text-2xl font-bold text-gray-800 mb-6">Reports</h2><div class="card p-4 sm:p-6"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 items-end"><div><label class="form-label">Report Type</label><select id="report-type" class="form-control"><option value="sales">Sales</option><option value="transfers">Transfers</option></select></div><div><label class="form-label">Start Date</label><input type="date" id="report-start-date" class="form-control" value="${thirtyDaysAgo}"></div><div><label class="form-label">End Date</label><input type="date" id="report-end-date" class="form-control" value="${today}"></div><div class="self-end"><button id="generate-report-btn" class="btn btn-primary w-full"><i class="fas fa-cogs mr-2"></i>Generate</button></div></div><div class="flex justify-end mb-4"><button id="export-report-btn" class="btn btn-outline hidden"><i class="fas fa-download mr-2"></i>Export as CSV</button></div><div class="overflow-x-auto"><table class="w-full responsive-table text-sm"><thead id="report-table-head" class="bg-gray-50"></thead><tbody id="report-table-body" class="bg-white"></tbody></table></div></div>`;
             document.getElementById('generate-report-btn').addEventListener('click', handleGenerateReport);
             document.getElementById('export-report-btn').addEventListener('click', handleExportCSV);
             handleGenerateReport();
         };
 
+        // --- Modal & Form Handlers ---
         const openModal = (id) => document.getElementById(id).style.display = 'flex';
         const closeModal = (id) => document.getElementById(id).style.display = 'none';
         const populateSelect = (el, data, text, val) => { el.innerHTML = '<option value="">Select...</option>' + data.map(i => `<option value="${i[val]}">${i[text]}</option>`).join(''); };
@@ -209,73 +310,90 @@
         };
         const addProductToSale = () => {
             const container = document.getElementById('sale-products-container'), row = document.createElement('div');
-            row.className = 'product-row';
-            row.innerHTML = `<select class="sale-product form-control flex-1" required></select><input type="number" placeholder="Qty" class="sale-quantity form-control w-20" min="1" required><button type="button" class="text-red-500 remove-product-btn"><i class="fas fa-times"></i></button>`;
+            row.className = 'flex items-center gap-2 sm:gap-4';
+            row.innerHTML = `<select class="sale-product form-control flex-1" required></select><input type="number" placeholder="Qty" class="sale-quantity form-control w-20" min="1" required><button type="button" class="text-red-500 hover:text-red-700 remove-product-btn p-2 rounded-full hover:bg-red-50"><i class="fas fa-times"></i></button>`;
             populateSelect(row.querySelector('.sale-product'), productsCache, 'name', 'id');
             row.querySelector('.remove-product-btn').addEventListener('click', () => { row.remove(); calculateSaleTotal(); });
-            container.appendChild(row); container.addEventListener('change', calculateSaleTotal);
+            row.addEventListener('change', calculateSaleTotal);
+            container.appendChild(row);
         };
         const calculateSaleTotal = () => {
             let total = 0;
-            document.querySelectorAll('.product-row').forEach(row => {
-                const pId = row.querySelector('.sale-product').value, qty = row.querySelector('.sale-quantity').value;
+            document.querySelectorAll('.sale-product').forEach(select => {
+                const row = select.closest('.flex');
+                const pId = select.value, qty = row.querySelector('.sale-quantity').value;
                 if (pId && qty) { const prod = productsCache.find(p => p.id == pId); total += (prod.price || 0) * parseInt(qty); }
             });
-            document.getElementById('sale-total-amount').textContent = `₹${total.toLocaleString()}`;
+            document.getElementById('sale-total-amount').textContent = `₹${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         };
-
         const handleFormSubmit = async (e) => {
             e.preventDefault(); const form = e.target;
             const endpointMap = {'add-inventory-form': '/inventory', 'transfer-form': '/transfers', 'sale-form': '/sales', 'add-user-form': '/users'};
             const endpoint = endpointMap[form.id];
             let body = Object.fromEntries(new FormData(form));
             if (form.id === 'sale-form') {
-                body.items = Array.from(document.querySelectorAll('.product-row')).map(r => ({ product_id: r.querySelector('.sale-product').value, quantity: r.querySelector('.sale-quantity').value })).filter(i => i.product_id && i.quantity);
-                if(body.items.length===0){Swal.fire('Error','Add at least one product.','error');return;}
+                body.items = Array.from(document.querySelectorAll('.sale-product')).map(select => {
+                    const row = select.closest('.flex');
+                    return { product_id: select.value, quantity: row.querySelector('.sale-quantity').value };
+                }).filter(i => i.product_id && i.quantity > 0);
+                if(body.items.length===0){Swal.fire('Error','Please add at least one product with a valid quantity.','error');return;}
+                delete body.location_id; delete body.customer_name;
+                body = {
+                    location_id: form.elements.location_id.value,
+                    customer_name: form.elements.customer_name.value,
+                    items: body.items
+                };
             }
             try {
-                await api(endpoint, 'POST', body);
+                const result = await api(endpoint, 'POST', body);
                 closeModal(form.closest('.modal').id);
-                Swal.fire('Success!', 'Operation completed successfully.', 'success');
+                Swal.fire('Success!', result.message || 'Operation completed successfully.', 'success');
                 const pageName = endpoint.slice(1);
                 const refreshFunc = window[`render${pageName.charAt(0).toUpperCase() + pageName.slice(1)}Page`];
                 if (refreshFunc) refreshFunc();
                 if(pageName === 'inventory') await loadProducts();
             } catch (error) {}
         };
+
+        // --- Report Handlers ---
         const handleGenerateReport = async () => {
             const type = document.getElementById('report-type').value; const startDate = document.getElementById('report-start-date').value; const endDate = document.getElementById('report-end-date').value;
             if (!startDate || !endDate) { Swal.fire('Error', 'Please select a start and end date.', 'error'); return; }
             currentReportData = await api(`/reports?type=${type}&start_date=${startDate}&end_date=${endDate}`);
             const head = document.getElementById('report-table-head'), body = document.getElementById('report-table-body');
-            if(currentReportData.length === 0) { head.innerHTML = ''; body.innerHTML = '<tr><td colspan="100%" class="text-center text-gray-500 py-4">No data found.</td></tr>'; document.getElementById('export-report-btn').classList.add('hidden'); return; }
+            if(currentReportData.length === 0) { head.innerHTML = ''; body.innerHTML = '<tr><td colspan="100%" class="text-center text-gray-500 p-8">No data found for the selected criteria.</td></tr>'; document.getElementById('export-report-btn').classList.add('hidden'); return; }
             const headers = Object.keys(currentReportData[0]);
-            head.innerHTML = `<tr>${headers.map(h => `<th>${h.replace(/_/g, ' ')}</th>`).join('')}</tr>`;
-            body.innerHTML = currentReportData.map(row => `<tr>${headers.map(h => `<td>${row[h]}</td>`).join('')}</tr>`).join('');
+            head.innerHTML = `<tr>${headers.map(h => `<th class="p-4 text-left">${h.replace(/_/g, ' ')}</th>`).join('')}</tr>`;
+            body.innerHTML = currentReportData.map(row => `<tr>${headers.map(h => `<td class="p-4" data-label="${h.replace(/_/g, ' ')}">${row[h]}</td>`).join('')}</tr>`).join('');
             document.getElementById('export-report-btn').classList.remove('hidden');
         };
         const handleExportCSV = () => {
             if (currentReportData.length === 0) return;
             const headers = Object.keys(currentReportData[0]);
-            let csv = headers.join(',') + '\n' + currentReportData.map(row => headers.map(h => `"${row[h]}"`).join(',')).join('\n');
+            let csv = headers.join(',') + '\n' + currentReportData.map(row => headers.map(h => `"${String(row[h]).replace(/"/g, '""')}"`).join(',')).join('\n');
             const link = document.createElement("a"); link.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
             link.download = `${document.getElementById('report-type').value}_report_${new Date().toISOString().slice(0,10)}.csv`;
             link.click();
         };
 
-        window.deleteInventoryItem = async (id) => { if ((await Swal.fire({ title: 'Delete Item?', text: "This is permanent.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' })).isConfirmed) { await api(`/inventory/${id}`, 'DELETE'); Swal.fire('Deleted!', '', 'success'); renderInventoryPage(); } };
-        window.deleteUser = async (id, name) => { if ((await Swal.fire({ title: `Delete ${name}?`, text: "This is permanent.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' })).isConfirmed) { await api(`/users/${id}`, 'DELETE'); Swal.fire('Deleted!', `${name} removed.`, 'success'); renderUsersPage(); } };
-        window.viewSaleDetails = async (id) => { const { sale, items } = await api(`/sales/${id}`); const itemsHtml = items.map(i => `<div class="flex justify-between"><span>${i.product_name}</span><span>${i.quantity} x ₹${i.unit_price.toLocaleString()}</span></div>`).join(''); Swal.fire({ title: `Sale #${sale.id}`, html: `<div class="text-left space-y-2"><div><strong>Customer:</strong> ${sale.customer_name||'N/A'}</div>${itemsHtml}<hr><div class="flex justify-between font-bold"><strong>Total:</strong><span>₹${sale.total_amount.toLocaleString()}</span></div></div>` }); };
+        // --- Action Handlers (Delete, View, etc.) ---
+        window.deleteInventoryItem = async (id) => { if ((await Swal.fire({ title: 'Are you sure?', text: "You won't be able to revert this!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#6b7280', confirmButtonText: 'Yes, delete it!' })).isConfirmed) { await api(`/inventory/${id}`, 'DELETE'); Swal.fire('Deleted!', 'The inventory item has been deleted.', 'success'); renderInventoryPage(); } };
+        window.deleteUser = async (id, name) => { if ((await Swal.fire({ title: `Delete ${name}?`, text: "This user will be permanently removed.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#6b7280', confirmButtonText: 'Yes, delete user!' })).isConfirmed) { await api(`/users/${id}`, 'DELETE'); Swal.fire('Deleted!', `${name} has been removed.`, 'success'); renderUsersPage(); } };
+        window.viewSaleDetails = async (id) => { const { sale, items } = await api(`/sales/${id}`); const itemsHtml = items.map(i => `<div class="flex justify-between py-1"><span>${i.quantity} x ${i.product_name}</span><span class="font-mono">₹${(i.quantity * i.unit_price).toLocaleString()}</span></div>`).join(''); Swal.fire({ title: `Sale #${sale.id}`, html: `<div class="text-left space-y-2 p-2"><div><strong>Customer:</strong> ${sale.customer_name||'N/A'}</div><hr class="my-2">${itemsHtml}<hr class="my-2"><div class="flex justify-between font-bold text-lg"><strong>Total:</strong><span class="font-mono">₹${sale.total_amount.toLocaleString()}</span></div></div>` }); };
 
+        // --- Pagination Renderer ---
         const renderPagination = (type, pagination, renderFunc) => {
-            const container = document.getElementById(`${type}-pagination`); if (!container) return;
-            const { page, total_pages, total } = pagination;
-            const info = `<div class="text-sm text-gray-500">Showing ${total > 0 ? (page-1)*10+1 : 0} to ${Math.min(page*10, total)} of ${total}</div>`;
+            const container = document.getElementById(`${type}-pagination`); if (!container || pagination.total === 0) { if(container) container.innerHTML = ''; return;}
+            const { page, total_pages, total, per_page } = pagination;
+            const startItem = (page - 1) * per_page + 1;
+            const endItem = Math.min(page * per_page, total);
+            const info = `<div class="text-sm text-gray-600">Showing <span class="font-semibold">${startItem}</span> to <span class="font-semibold">${endItem}</span> of <span class="font-semibold">${total}</span> results</div>`;
             let buttons = '';
-            if (total_pages > 1) { const funcName = `window.render${type.charAt(0).toUpperCase() + type.slice(1)}Page`; buttons = `<div class="flex space-x-1"><button class="btn btn-sm btn-outline" ${page === 1 ? 'disabled' : ''} onclick="${funcName}(${page - 1})">«</button><span class="px-3 py-1 text-sm">Page ${page} of ${total_pages}</span><button class="btn btn-sm btn-outline" ${page === total_pages ? 'disabled' : ''} onclick="${funcName}(${page + 1})">»</button></div>`; }
+            if (total_pages > 1) { const funcName = `window.render${type.charAt(0).toUpperCase() + type.slice(1)}Page`; buttons = `<div class="flex items-center space-x-1 mt-2 sm:mt-0"><button class="px-3 py-1 text-sm rounded-md border bg-white ${page === 1 ? 'text-gray-300' : 'hover:bg-gray-50'}" ${page === 1 ? 'disabled' : ''} onclick="${funcName}(${page - 1})">Prev</button><span class="px-3 py-1 text-sm text-gray-500">Page ${page} of ${total_pages}</span><button class="px-3 py-1 text-sm rounded-md border bg-white ${page === total_pages ? 'text-gray-300' : 'hover:bg-gray-50'}" ${page === total_pages ? 'disabled' : ''} onclick="${funcName}(${page + 1})">Next</button></div>`; }
             container.innerHTML = info + buttons;
         };
 
+        // --- Start the App ---
         init();
     });
 </script>
